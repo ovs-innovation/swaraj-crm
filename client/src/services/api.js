@@ -1,0 +1,111 @@
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: '/api',
+  headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(err);
+  }
+);
+
+export default api;
+
+// Auth
+export const authAPI = {
+  login: (data) => api.post('/auth/login', data),
+  getMe: () => api.get('/auth/me'),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
+  resetPassword: (token, password) => api.put(`/auth/reset-password/${token}`, { password }),
+  changePassword: (data) => api.put('/auth/change-password', data),
+};
+
+export const usersAPI = {
+  getAll: (params) => api.get('/users', { params }),
+  create: (data) => api.post('/users', data),
+  update: (id, data) => api.put(`/users/${id}`, data),
+  toggleStatus: (id) => api.patch(`/users/${id}/toggle-status`),
+  delete: (id) => api.delete(`/users/${id}`),
+};
+
+// Area Managers
+export const areaManagerAPI = {
+  getAll: (params) => api.get('/area-managers', { params }),
+  getOne: (id) => api.get(`/area-managers/${id}`),
+  create: (data) => api.post('/area-managers', data),
+  update: (id, data) => api.put(`/area-managers/${id}`, data),
+  delete: (id) => api.delete(`/area-managers/${id}`),
+  toggleStatus: (id) => api.patch(`/area-managers/${id}/toggle-status`),
+};
+
+// Dealers
+export const dealerAPI = {
+  getAll: (params) => api.get('/dealers', { params }),
+  getOne: (id) => api.get(`/dealers/${id}`),
+  getProfile: (id) => api.get(`/dealers/${id}/profile`),
+  getMyProfile: () => api.get('/dealers/me/profile'),
+  create: (data) => api.post('/dealers', data),
+  update: (id, data) => api.put(`/dealers/${id}`, data),
+  delete: (id) => api.delete(`/dealers/${id}`),
+  assign: (id, data) => api.post(`/dealers/${id}/assign`, data),
+  createLogin: (id, data) => api.post(`/dealers/${id}/login`, data),
+  getAssignmentHistory: (id) => api.get(`/dealers/${id}/assignment-history`),
+};
+
+// Visits
+export const visitAPI = {
+  getAll: (params) => api.get('/visits', { params }),
+  getOne: (id) => api.get(`/visits/${id}`),
+  create: (data) => api.post('/visits', data),
+  update: (id, data) => api.put(`/visits/${id}`, data),
+  delete: (id) => api.delete(`/visits/${id}`),
+};
+
+// Media
+export const mediaAPI = {
+  getAll: (params) => api.get('/media', { params }),
+  upload: (formData) => api.post('/media/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  approve: (id, data) => api.patch(`/media/${id}/approve`, data),
+  delete: (id) => api.delete(`/media/${id}`),
+};
+
+// Dashboard
+export const dashboardAPI = {
+  getSuperAdmin: () => api.get('/dashboard/super-admin'),
+  getAdmin: () => api.get('/dashboard/admin'),
+  getAreaManager: () => api.get('/dashboard/area-manager'),
+  getDealer: () => api.get('/dashboard/dealer'),
+  getActivities: (params) => api.get('/dashboard/activities', { params }),
+};
+
+// Reports
+export const reportAPI = {
+  getAuditLogs: (params) => api.get('/reports/audit-logs', { params }),
+  getDealers: () => api.get('/reports/dealers'),
+  getVisits: (params) => api.get('/reports/visits', { params }),
+  getUploads: (params) => api.get('/reports/uploads', { params }),
+  getStateWise: () => api.get('/reports/state-wise'),
+  getAreaWise: () => api.get('/reports/area-wise'),
+};
+
+// Settings
+export const settingsAPI = {
+  get: () => api.get('/settings'),
+  update: (data) => api.put('/settings', data),
+};
