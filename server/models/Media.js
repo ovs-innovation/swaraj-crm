@@ -29,4 +29,7 @@ const mediaSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+  mediaSchema.index({ dealer: 1, status: 1, createdAt: -1 });
+  mediaSchema.index({ createdAt: -1 });
+
 export default mongoose.model('Media', mediaSchema);

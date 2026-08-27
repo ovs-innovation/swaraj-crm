@@ -76,7 +76,7 @@ export const getDealers = asyncHandler(async (req, res) => {
 
   const total = await Dealer.countDocuments(filter);
   const dealers = await paginate(
-    Dealer.find(filter).populate('areaManager', 'name employeeId state district').sort({ createdAt: -1 }),
+    Dealer.find(filter).populate('areaManager', 'name employeeId state district').sort({ createdAt: -1 }).lean(),
     page,
     limit
   );

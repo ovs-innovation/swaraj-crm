@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { dealerAPI } from '../../services/api';
+import MediaPreview from '../components/MediaPreview';
 
 const DealerProfile = () => {
   const { id } = useParams();
@@ -74,8 +75,8 @@ const DealerProfile = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
           {media.map((m) => (
             <div key={m._id} className="card" style={{ padding: '1rem' }}>
-              {m.type === 'image' ? (
-                <img src={m.url} alt="" style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8 }} />
+              {m.type === 'image' || m.type === 'video' ? (
+                <MediaPreview item={m} height={120} />
               ) : (
                 <div style={{ height: 120, background: '#f1f5f9', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{m.type}</div>
               )}

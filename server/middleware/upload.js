@@ -20,11 +20,13 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = /jpeg|jpg|png|gif|webp|mp4|mov|avi|pdf|doc|docx/;
-  const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-  const mime = allowed.test(file.mimetype.split('/')[1]);
-  if (ext || mime) cb(null, true);
-  else cb(new Error('Invalid file type'), false);
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedExt = ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.mp4', '.mov', '.avi', '.webm', '.pdf', '.doc', '.docx'];
+  if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/') || allowedExt.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type'), false);
+  }
 };
 
 export const upload = multer({

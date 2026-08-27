@@ -1,12 +1,22 @@
 import axios from 'axios';
 
+export const AUTH_TOKEN_KEY = 'vastora_crm_token';
+export const AUTH_USER_KEY = 'vastora_crm_user';
+
+export const clearAuthStorage = () => {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+  localStorage.removeItem(AUTH_USER_KEY);
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+};
+
 const api = axios.create({
   baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem(AUTH_TOKEN_KEY) || localStorage.getItem('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -14,11 +24,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    const status = err.response?.status;
+    const url = err.config?.url || '';
+    const skipRedirect = url.includes('/auth/login') || url.includes('/auth/me');
+
+    if (status === 401 && !skipRedirect) {
+      clearAuthStorage();
       if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+        window.location.replace('/login');
       }
     }
     return Promise.reject(err);
@@ -27,7 +40,6 @@ api.interceptors.response.use(
 
 export default api;
 
-// Auth
 export const authAPI = {
   login: (data) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
@@ -44,7 +56,6 @@ export const usersAPI = {
   delete: (id) => api.delete(`/users/${id}`),
 };
 
-// Area Managers
 export const areaManagerAPI = {
   getAll: (params) => api.get('/area-managers', { params }),
   getOne: (id) => api.get(`/area-managers/${id}`),
@@ -54,7 +65,6 @@ export const areaManagerAPI = {
   toggleStatus: (id) => api.patch(`/area-managers/${id}/toggle-status`),
 };
 
-// Dealers
 export const dealerAPI = {
   getAll: (params) => api.get('/dealers', { params }),
   getOne: (id) => api.get(`/dealers/${id}`),
@@ -68,7 +78,6 @@ export const dealerAPI = {
   getAssignmentHistory: (id) => api.get(`/dealers/${id}/assignment-history`),
 };
 
-// Visits
 export const visitAPI = {
   getAll: (params) => api.get('/visits', { params }),
   getOne: (id) => api.get(`/visits/${id}`),
@@ -77,15 +86,13 @@ export const visitAPI = {
   delete: (id) => api.delete(`/visits/${id}`),
 };
 
-// Media
 export const mediaAPI = {
-  getAll: (params) => api.get('/media', { params }),
+  getAll: (params) => api.get('/media', { params: { limit: 48, ...params } }),
   upload: (formData) => api.post('/media/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   approve: (id, data) => api.patch(`/media/${id}/approve`, data),
   delete: (id) => api.delete(`/media/${id}`),
 };
 
-// Dashboard
 export const dashboardAPI = {
   getSuperAdmin: () => api.get('/dashboard/super-admin'),
   getAdmin: () => api.get('/dashboard/admin'),
@@ -94,7 +101,6 @@ export const dashboardAPI = {
   getActivities: (params) => api.get('/dashboard/activities', { params }),
 };
 
-// Reports
 export const reportAPI = {
   getAuditLogs: (params) => api.get('/reports/audit-logs', { params }),
   getDealers: () => api.get('/reports/dealers'),
@@ -104,7 +110,6 @@ export const reportAPI = {
   getAreaWise: () => api.get('/reports/area-wise'),
 };
 
-// Settings
 export const settingsAPI = {
   get: () => api.get('/settings'),
   update: (data) => api.put('/settings', data),

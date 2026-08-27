@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
 
 export const protect = async (req, res, next) => {
   let token;
@@ -14,10 +13,20 @@ export const protect = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select('-password');
-    if (!req.user || req.user.status !== 'active') {
-      return res.status(401).json({ success: false, message: 'User not found or inactive' });
+    if (!decoded?.id || !decoded?.role) {
+      return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
+    if (decoded.status && decoded.status !== 'active') {
+      return res.status(401).json({ success: false, message: 'Account is inactive' });
+    }
+
+    req.user = {
+      _id: decoded.id,
+      role: decoded.role,
+      status: decoded.status || 'active',
+      areaManagerRef: decoded.areaManagerRef || null,
+      dealerRef: decoded.dealerRef || null,
+    };
     next();
   } catch {
     return res.status(401).json({ success: false, message: 'Not authorized, token failed' });
@@ -25,11 +34,13 @@ export const protect = async (req, res, next) => {
 };
 
 export const authorize = (...roles) => (req, res, next) => {
-  if (req.user.role === 'super_admin') return next();
-  if (!roles.includes(req.user.role)) {
+  const role = req.user.role;
+  const allowed = roles.includes(role);
+  const hqOverride = role === 'super_admin' && roles.some((r) => r === 'admin' || r === 'super_admin');
+  if (!allowed && !hqOverride) {
     return res.status(403).json({
       success: false,
-      message: `Role ${req.user.role} is not authorized`,
+      message: `Role ${role} is not authorized`,
     });
   }
   next();

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Upload, Check, X } from 'lucide-react';
 import { mediaAPI, dealerAPI } from '../../services/api';
 import { useAuth } from '../context/AuthContext';
+import MediaPreview from '../components/MediaPreview';
 
 /**
  * Modes:
@@ -15,13 +16,14 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
   const [media, setMedia] = useState([]);
   const [dealers, setDealers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState('');
   const [showUpload, setShowUpload] = useState(false);
   const [file, setFile] = useState(null);
   const [form, setForm] = useState({ dealer: '', description: '', location: '' });
   const [filter, setFilter] = useState(approvalMode ? 'pending' : dealerPostsMode ? 'approved' : '');
 
-  const fetchMedia = () => {
-    setLoading(true);
+  const fetchMedia = (silent = false) => {
+    if (!silent) setLoading(true);
     const params = {};
     if (filter) params.status = filter;
     if (approvalMode) params.dealerUploadsOnly = 'true';
@@ -45,19 +47,44 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
     setShowUpload(false);
     setFile(null);
     setForm({ dealer: '', description: '', location: '' });
-    fetchMedia();
+    fetchMedia(true);
   };
 
   const handleApprove = async (id, status) => {
-    const comment = status === 'rejected' ? prompt('Rejection reason:') : '';
-    await mediaAPI.approve(id, { status, adminComment: comment });
-    fetchMedia();
+    let comment = '';
+    if (status === 'rejected') {
+      const reason = prompt('Rejection reason:');
+      if (reason === null) return;
+      comment = reason;
+    }
+    const previous = media;
+    setBusyId(id);
+    setMedia((list) =>
+      list.map((item) => (item._id === id ? { ...item, status } : item)).filter((item) => {
+        if (!filter) return true;
+        return item.status === filter;
+      })
+    );
+    try {
+      await mediaAPI.approve(id, { status, adminComment: comment });
+    } catch (err) {
+      setMedia(previous);
+      alert(err.response?.data?.message || 'Could not update');
+    } finally {
+      setBusyId('');
+    }
   };
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this upload?')) return;
-    await mediaAPI.delete(id);
-    fetchMedia();
+    const previous = media;
+    setMedia((list) => list.filter((item) => item._id !== id));
+    try {
+      await mediaAPI.delete(id);
+    } catch (err) {
+      setMedia(previous);
+      alert(err.response?.data?.message || 'Delete failed');
+    }
   };
 
   const title = adminMode
@@ -105,11 +132,11 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
         {loading ? <div className="loading">Loading...</div> : media.map((m) => (
           <div key={m._id} className="card">
-            {m.type === 'image' ? (
-              <img src={m.url} alt="" style={{ width: '100%', height: 150, objectFit: 'cover', borderRadius: 8 }} />
+            {m.type === 'image' || m.type === 'video' ? (
+              <MediaPreview item={m} height={160} />
             ) : (
               <div style={{ height: 150, background: '#f1f5f9', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.875rem' }}>
-                {m.type.toUpperCase()}
+                {m.type?.toUpperCase()}
               </div>
             )}
             <p style={{ fontSize: '0.85rem', margin: '0.5rem 0' }}>
@@ -124,14 +151,14 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
               <div style={{ display: 'flex', gap: '0.25rem' }}>
                 {canApprove && m.status === 'pending' && (!approvalMode || m.uploadSource === 'dealer') && (
                   <>
-                    <button className="btn btn-sm btn-primary" onClick={() => handleApprove(m._id, 'approved')} title="Approve"><Check size={14} /></button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleApprove(m._id, 'rejected')} title="Reject"><X size={14} /></button>
+                    <button className="btn btn-sm btn-primary" disabled={busyId === m._id} onClick={() => handleApprove(m._id, 'approved')} title="Approve"><Check size={14} /></button>
+                    <button className="btn btn-sm btn-danger" disabled={busyId === m._id} onClick={() => handleApprove(m._id, 'rejected')} title="Reject"><X size={14} /></button>
                   </>
                 )}
                 {isAdmin && (
                   <button className="btn btn-sm btn-danger" onClick={() => handleDelete(m._id)}>Delete</button>
                 )}
-                {isDealer && m.status === 'pending' && (m.uploadedBy?._id === user?.id || m.uploadedBy === user?.id) && (
+                {isDealer && m.status === 'pending' && String(m.uploadedBy?._id || m.uploadedBy) === String(user?.id) && (
                   <button className="btn btn-sm btn-outline" onClick={() => handleDelete(m._id)}>Delete</button>
                 )}
               </div>

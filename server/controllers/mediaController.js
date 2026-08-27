@@ -1,13 +1,12 @@
 import Media from '../models/Media.js';
 import Dealer from '../models/Dealer.js';
-import User from '../models/User.js';
 import { asyncHandler, paginate, paginationMeta } from '../utils/helpers.js';
 import { logAudit } from '../middleware/auditLog.js';
 import { logActivity } from '../utils/activityLogger.js';
 import { getFileType } from '../middleware/upload.js';
 
 const getAssignedDealerIds = async (areaManagerRef) => {
-  const dealers = await Dealer.find({ areaManager: areaManagerRef }).select('_id');
+  const dealers = await Dealer.find({ areaManager: areaManagerRef }).select('_id').lean();
   return dealers.map((d) => d._id);
 };
 
@@ -29,15 +28,16 @@ export const getMedia = asyncHandler(async (req, res) => {
   if (type) filter.type = type;
   if (uploadSource) filter.uploadSource = uploadSource;
 
-  const total = await Media.countDocuments(filter);
-  const media = await paginate(
-    Media.find(filter)
-      .populate('dealer', 'dealerName dealerCode')
-      .populate('uploadedBy', 'name email role')
-      .sort({ createdAt: -1 }),
-    page,
-    limit
-  );
+  const query = Media.find(filter)
+    .populate('dealer', 'dealerName dealerCode')
+    .populate('uploadedBy', 'name email role')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const [total, media] = await Promise.all([
+    Media.countDocuments(filter),
+    paginate(query, page, limit),
+  ]);
 
   res.json({ success: true, data: media, ...paginationMeta(total, page, limit) });
 });
@@ -82,8 +82,8 @@ export const uploadMedia = asyncHandler(async (req, res) => {
     status: mediaStatus,
   });
 
-  await logAudit(req, 'upload', 'media', media._id, { uploadSource, status: mediaStatus });
-  await logActivity({
+  logAudit(req, 'upload', 'media', media._id, { uploadSource, status: mediaStatus });
+  logActivity({
     entityType: 'media',
     entityId: media._id,
     action: 'uploaded',
@@ -96,39 +96,37 @@ export const uploadMedia = asyncHandler(async (req, res) => {
 
 export const approveMedia = asyncHandler(async (req, res) => {
   const { status, adminComment } = req.body;
-  const media = await Media.findById(req.params.id);
+  const media = await Media.findById(req.params.id).select('dealer uploadedBy uploadSource').lean();
   if (!media) {
     return res.status(404).json({ success: false, message: 'Media not found' });
   }
 
   if (req.user.role === 'area_manager') {
-    const dealer = await Dealer.findById(media.dealer);
+    const dealer = await Dealer.findById(media.dealer).select('areaManager').lean();
     if (dealer?.areaManager?.toString() !== req.user.areaManagerRef?.toString()) {
       return res.status(403).json({ success: false, message: 'Not authorized to approve this upload' });
     }
     if (media.uploadSource !== 'dealer') {
       return res.status(403).json({ success: false, message: 'Area managers can only approve dealer uploads' });
     }
-    const uploader = await User.findById(media.uploadedBy);
-    if (uploader?.role !== 'dealer') {
-      return res.status(403).json({ success: false, message: 'Only dealer uploads can be approved by area manager' });
-    }
   }
 
-  media.status = status;
-  media.adminComment = adminComment;
-  await media.save();
+  const updated = await Media.findByIdAndUpdate(
+    req.params.id,
+    { status, adminComment },
+    { new: true }
+  ).lean();
 
-  await logAudit(req, status, 'media', media._id, { adminComment, role: req.user.role });
-  await logActivity({
+  logAudit(req, status, 'media', updated._id, { adminComment, role: req.user.role });
+  logActivity({
     entityType: 'media',
-    entityId: media._id,
+    entityId: updated._id,
     action: status,
     description: `Media ${status} by ${req.user.role}`,
     performedBy: req.user._id,
   });
 
-  res.json({ success: true, data: media });
+  res.json({ success: true, data: updated });
 });
 
 export const deleteMedia = asyncHandler(async (req, res) => {
@@ -146,6 +144,6 @@ export const deleteMedia = asyncHandler(async (req, res) => {
   }
 
   await Media.findByIdAndDelete(req.params.id);
-  await logAudit(req, 'delete', 'media', media._id);
+  logAudit(req, 'delete', 'media', media._id);
   res.json({ success: true, message: 'Media deleted' });
 });

@@ -1,42 +1,37 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Crown, Shield, Users, Store } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
-import { authAPI } from '../services/api';
 import './Login.css';
 
+const roles = [
+  { id: 'super_admin', label: 'Super Admin', icon: Crown, email: 'superadmin@vastora.com', password: 'super123' },
+  { id: 'admin', label: 'Admin', icon: Shield, email: 'admin@vastora.com', password: 'admin123' },
+  { id: 'area_manager', label: 'Area Manager', icon: Users, email: 'rajesh@vastora.com', password: 'manager123' },
+  { id: 'dealer', label: 'Dealer', icon: Store, email: 'amit@vastora.com', password: 'dealer123' },
+];
+
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showForgot, setShowForgot] = useState(false);
-  const [forgotMsg, setForgotMsg] = useState('');
-  const { login, getHomePath } = useAuth();
+  const [loadingRole, setLoadingRole] = useState('');
+  const { login, getHomePath, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const enterRole = async (picked) => {
+    if (loadingRole) return;
     setError('');
-    setLoading(true);
+    setLoadingRole(picked.id);
     try {
-      const user = await login(email, password);
-      navigate(getHomePath(user.role));
+      const loggedIn = await login(picked.email, picked.password, picked.id);
+      navigate(getHomePath(loggedIn.role), { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
-    } finally {
-      setLoading(false);
+      setError(err.response?.data?.message || 'Could not open this dashboard');
+      setLoadingRole('');
     }
   };
 
-  const handleForgot = async (e) => {
-    e.preventDefault();
-    try {
-      await authAPI.forgotPassword(email);
-      setForgotMsg('If the email exists, a reset link has been sent.');
-    } catch {
-      setForgotMsg('If the email exists, a reset link has been sent.');
-    }
-  };
+  if (authLoading) return <div className="loading">Loading...</div>;
+  if (user) return <Navigate to={getHomePath(user.role)} replace />;
 
   return (
     <div className="login-page">
@@ -44,47 +39,29 @@ const Login = () => {
         <div className="login-brand">
           <div className="login-logo">V</div>
           <h1>Vastora CRM</h1>
-          <p>Dealer network. One workspace.</p>
         </div>
 
         {error && <div className="alert alert-error">{error}</div>}
-        {forgotMsg && <div className="alert alert-success">{forgotMsg}</div>}
 
-        {!showForgot ? (
-          <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="admin@vastora.com" />
-            </div>
-            <div className="form-group">
-              <label>Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Enter password" />
-            </div>
-            <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-            <button type="button" className="forgot-link" onClick={() => setShowForgot(true)}>
-              Forgot Password?
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleForgot}>
-            <div className="form-group">
-              <label>Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <button type="submit" className="btn btn-primary login-btn">Send Reset Link</button>
-            <button type="button" className="forgot-link" onClick={() => setShowForgot(false)}>
-              Back to Login
-            </button>
-          </form>
-        )}
-
-        <div className="login-demo">
-          <small>Super Admin: superadmin@vastora.com / super123</small><br />
-          <small>Admin: admin@vastora.com / admin123</small><br />
-          <small>Area Manager: rajesh@vastora.com / manager123</small><br />
-          <small>Dealer: amit@vastora.com / dealer123</small>
+        <div className="role-grid">
+          {roles.map((picked) => {
+            const Icon = picked.icon;
+            const busy = loadingRole === picked.id;
+            return (
+              <button
+                key={picked.id}
+                type="button"
+                className={`role-chip ${busy ? 'active' : ''}`}
+                disabled={!!loadingRole}
+                onClick={() => enterRole(picked)}
+              >
+                <Icon size={20} />
+                <span>
+                  <strong>{picked.label}</strong>
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

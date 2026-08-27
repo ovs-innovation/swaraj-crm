@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { dealerAPI } from '../services/api';
+import MediaPreview from '../shared/components/MediaPreview';
 
 const DealerProfilePage = () => {
   const [data, setData] = useState(null);
@@ -72,8 +73,8 @@ const DealerProfilePage = () => {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
           {media.map((m) => (
             <div key={m._id} className="card" style={{ padding: '1rem' }}>
-              {m.type === 'image' ? (
-                <img src={m.url} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', borderRadius: 8 }} />
+              {m.type === 'image' || m.type === 'video' ? (
+                <MediaPreview item={m} height={140} />
               ) : (
                 <div style={{ height: 140, background: '#f1f5f9', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{m.type}</div>
               )}

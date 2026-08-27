@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import authRoutes from './routes/authRoutes.js';
@@ -26,7 +27,7 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: '7d' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -41,6 +42,22 @@ app.use('/api/settings', settingsRouter);
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Vastora CRM API is running' });
 });
+
+const clientDist = path.join(__dirname, '../client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+} else {
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+    if (req.method !== 'GET') return next();
+    const client = process.env.CLIENT_URL || 'http://localhost:5173';
+    res.redirect(302, `${client}${req.originalUrl}`);
+  });
+}
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

@@ -3,13 +3,19 @@ import crypto from 'crypto';
 import User from '../models/User.js';
 import { sendTokenResponse } from '../utils/generateToken.js';
 import { asyncHandler } from '../utils/helpers.js';
+import { toPublicUser } from '../utils/publicUser.js';
 import { logAudit } from '../middleware/auditLog.js';
 
 export const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, role } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ success: false, message: 'Please provide email and password' });
+  }
+
+  const allowedRoles = ['super_admin', 'admin', 'area_manager', 'dealer'];
+  if (!role || !allowedRoles.includes(role)) {
+    return res.status(400).json({ success: false, message: 'Please select a login role' });
   }
 
   const user = await User.findOne({ email }).select('+password');
@@ -17,18 +23,25 @@ export const login = asyncHandler(async (req, res) => {
     return res.status(401).json({ success: false, message: 'Invalid credentials' });
   }
 
+  if (user.role !== role) {
+    return res.status(403).json({
+      success: false,
+      message: 'This account does not match the selected role. Choose the correct role and try again.',
+    });
+  }
+
   if (user.status !== 'active') {
     return res.status(401).json({ success: false, message: 'Account is inactive' });
   }
 
   req.user = user;
-  await logAudit(req, 'login', 'user', user._id, { email });
+  logAudit(req, 'login', 'user', user._id, { email });
   sendTokenResponse(user, 200, res);
 });
 
 export const getMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id).select('-password');
-  res.json({ success: true, user });
+  const user = await User.findById(req.user._id).select('-password').lean();
+  res.json({ success: true, user: toPublicUser(user) });
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {

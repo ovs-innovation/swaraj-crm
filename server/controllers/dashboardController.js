@@ -4,6 +4,7 @@ import Visit from '../models/Visit.js';
 import Media from '../models/Media.js';
 import Activity from '../models/Activity.js';
 import User from '../models/User.js';
+import mongoose from 'mongoose';
 import { asyncHandler } from '../utils/helpers.js';
 
 const startOfToday = () => {
@@ -167,11 +168,15 @@ export const getAdminDashboard = asyncHandler(async (req, res) => {
 });
 
 export const getAreaManagerDashboard = asyncHandler(async (req, res) => {
-  const areaManagerId = req.user.areaManagerRef;
-  const today = startOfToday();
-  const dealerIds = (await Dealer.find({ areaManager: areaManagerId }).select('_id')).map((d) => d._id);
+  if (!req.user.areaManagerRef) {
+    return res.status(403).json({ success: false, message: 'Area manager profile not linked' });
+  }
 
-  const [assignedDealers, inactiveDealers, todayVisits, pendingUploads, completedVisits, myDealers, pendingMedia, visitTrend] =
+  const areaManagerId = new mongoose.Types.ObjectId(req.user.areaManagerRef);
+  const today = startOfToday();
+  const dealerIds = (await Dealer.find({ areaManager: areaManagerId }).select('_id').lean()).map((d) => d._id);
+
+  const [assignedDealers, inactiveDealers, todayVisits, pendingUploads, completedVisits, myDealers, pendingMedia, visitTrend, recentVisits] =
     await Promise.all([
       Dealer.countDocuments({ areaManager: areaManagerId, status: 'active' }),
       Dealer.countDocuments({ areaManager: areaManagerId, status: 'inactive' }),
@@ -182,11 +187,12 @@ export const getAreaManagerDashboard = asyncHandler(async (req, res) => {
         dealer: { $in: dealerIds },
       }),
       Visit.countDocuments({ areaManager: areaManagerId, status: 'completed' }),
-      Dealer.find({ areaManager: areaManagerId }).select('dealerName dealerCode city status mobile').sort({ dealerName: 1 }).limit(8),
+      Dealer.find({ areaManager: areaManagerId }).select('dealerName dealerCode city status mobile').sort({ dealerName: 1 }).limit(8).lean(),
       Media.find({ uploadSource: 'dealer', status: 'pending', dealer: { $in: dealerIds } })
         .populate('dealer', 'dealerName dealerCode')
         .sort({ createdAt: -1 })
-        .limit(6),
+        .limit(6)
+        .lean(),
       Visit.aggregate([
         {
           $match: {
@@ -202,12 +208,12 @@ export const getAreaManagerDashboard = asyncHandler(async (req, res) => {
         },
         { $sort: { _id: 1 } },
       ]),
+      Visit.find({ areaManager: areaManagerId })
+        .populate('dealer', 'dealerName dealerCode')
+        .sort({ visitDate: -1 })
+        .limit(6)
+        .lean(),
     ]);
-
-  const recentVisits = await Visit.find({ areaManager: areaManagerId })
-    .populate('dealer', 'dealerName dealerCode')
-    .sort({ visitDate: -1 })
-    .limit(6);
 
   res.json({
     success: true,
@@ -239,8 +245,8 @@ export const getDealerDashboard = asyncHandler(async (req, res) => {
       Media.countDocuments({ dealer: dealerId, status: 'rejected' }),
       Visit.countDocuments({ dealer: dealerId }),
       Visit.countDocuments({ dealer: dealerId, status: 'completed' }),
-      Media.find({ dealer: dealerId }).sort({ createdAt: -1 }).limit(6),
-      Visit.find({ dealer: dealerId }).sort({ visitDate: -1 }).limit(5),
+      Media.find({ dealer: dealerId }).sort({ createdAt: -1 }).limit(6).lean(),
+      Visit.find({ dealer: dealerId }).sort({ visitDate: -1 }).limit(5).lean(),
     ]);
 
   res.json({

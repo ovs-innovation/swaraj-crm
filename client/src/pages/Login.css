@@ -15,8 +15,61 @@
   border-radius: 20px;
   padding: 2.5rem;
   width: 100%;
-  max-width: 430px;
+  max-width: 460px;
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.role-chip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  text-align: left;
+  padding: 1rem 0.9rem;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.role-chip:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.role-chip strong {
+  display: block;
+  font-size: 0.8rem;
+}
+
+.role-chip small {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.role-chip:hover {
+  border-color: #cbd5e1;
+  background: white;
+}
+
+.role-chip.active {
+  border-color: var(--primary);
+  background: #fff1f2;
+  box-shadow: 0 0 0 3px rgba(227, 24, 55, 0.12);
+  color: var(--primary);
+}
+
+.role-chip.active small {
+  color: #9f1239;
 }
 
 .login-brand {
