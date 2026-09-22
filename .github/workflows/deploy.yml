@@ -25,28 +25,30 @@ jobs:
           cache: 'npm'
           cache-dependency-path: client/package-lock.json
 
-      # Step 1: Pre-verify frontend build in GitHub runner
+      # Step 1: Pre-verify frontend build in runner
       - name: Verify Client Build
         run: |
           cd client
           npm ci || npm install
           npm run build
 
-      # Step 2: SSH into Hostinger VPS and deploy
+      # Step 2: Deploy to VPS using Native OpenSSH
       - name: Deploy to Hostinger VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script_stop: true
-          timeout: 60s
-          command_timeout: 10m
-          script: |
+        env:
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          HOST: ${{ secrets.HOST }}
+          USERNAME: ${{ secrets.USERNAME }}
+          TARGET_DIR: ${{ secrets.TARGET_DIR }}
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s\n" "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key "$USERNAME@$HOST" "bash -s" << 'EOF'
             set -e
 
             echo "=== Step 1: Navigating to project directory ==="
-            cd ${{ secrets.TARGET_DIR }}
+            cd /var/www/swaraj-crm/swaraj-crm
 
             echo "=== Step 2: Pulling latest changes from main ==="
             git fetch origin main
@@ -72,3 +74,4 @@ jobs:
             fi
 
             echo "=== DEPLOYMENT COMPLETED SUCCESSFULLY ==="
+          EOF
