@@ -25,21 +25,20 @@ jobs:
           cache: 'npm'
           cache-dependency-path: client/package-lock.json
 
-      # Step 1: Pre-verify frontend build in GitHub runner to catch syntax errors
+      # Step 1: Pre-verify frontend build in GitHub runner
       - name: Verify Client Build
         run: |
           cd client
           npm ci || npm install
           npm run build
 
-      # Step 2: SSH into Hostinger VPS and deploy live
+      # Step 2: SSH into Hostinger VPS and deploy
       - name: Deploy to Hostinger VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.PORT }}
           script_stop: true
           timeout: 60s
           command_timeout: 10m
