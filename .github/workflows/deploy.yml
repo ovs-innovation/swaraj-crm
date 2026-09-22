@@ -1,0 +1,75 @@
+name: Deploy Swaraj CRM to Hostinger VPS
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-swaraj-crm
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy to Hostinger VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
+
+      # Step 1: Pre-verify frontend build in GitHub runner to catch syntax errors
+      - name: Verify Client Build
+        run: |
+          cd client
+          npm ci || npm install
+          npm run build
+
+      # Step 2: SSH into Hostinger VPS and deploy live
+      - name: Deploy to Hostinger VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.PORT }}
+          script_stop: true
+          timeout: 60s
+          command_timeout: 10m
+          script: |
+            set -e
+
+            echo "=== Step 1: Navigating to project directory ==="
+            cd ${{ secrets.TARGET_DIR }}
+
+            echo "=== Step 2: Pulling latest changes from main ==="
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "=== Step 3: Updating Backend Dependencies ==="
+            cd server
+            npm install --omit=dev
+
+            echo "=== Step 4: Restarting PM2 Backend ==="
+            export PATH=$PATH:/usr/local/bin:/usr/bin:~/.nvm/versions/node/$(ls ~/.nvm/versions/node 2>/dev/null | tail -n 1)/bin
+            pm2 reload swaraj-crm-backend --update-env || pm2 restart swaraj-crm-backend
+            pm2 save
+
+            echo "=== Step 5: Building Frontend Client on VPS ==="
+            cd ../client
+            npm install
+            npm run build
+
+            echo "=== Step 6: Reloading Nginx ==="
+            if command -v nginx > /dev/null 2>&1; then
+              nginx -t && systemctl reload nginx
+            fi
+
+            echo "=== DEPLOYMENT COMPLETED SUCCESSFULLY ==="
