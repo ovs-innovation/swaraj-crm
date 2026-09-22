@@ -32,12 +32,12 @@ jobs:
           npm ci || npm install
           npm run build
 
-      # Step 2: Deploy to Hostinger VPS using Password
+      # Step 2: Deploy to Hostinger VPS
       - name: Deploy to Hostinger VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
+          host: 72.60.111.212
+          username: root
           password: ${{ secrets.PASSWORD }}
           script_stop: true
           timeout: 60s
