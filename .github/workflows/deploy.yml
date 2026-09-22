@@ -38,13 +38,18 @@ jobs:
           SSH_KEY: ${{ secrets.SSH_KEY }}
           HOST: ${{ secrets.HOST }}
           USERNAME: ${{ secrets.USERNAME }}
-          TARGET_DIR: ${{ secrets.TARGET_DIR }}
         run: |
           mkdir -p ~/.ssh
           printf "%s\n" "$SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key "$USERNAME@$HOST" "bash -s" << 'EOF'
+          # Clean any trailing spaces/newlines from secrets
+          CLEAN_USER=$(echo "${USERNAME:-root}" | tr -d '\r\n[:space:]')
+          CLEAN_HOST=$(echo "${HOST:-72.60.111.212}" | tr -d '\r\n[:space:]')
+
+          echo "Connecting to $CLEAN_USER@$CLEAN_HOST..."
+
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key "$CLEAN_USER@$CLEAN_HOST" "bash -s" << 'EOF'
             set -e
 
             echo "=== Step 1: Navigating to project directory ==="
