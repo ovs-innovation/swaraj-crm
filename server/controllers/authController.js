@@ -41,6 +41,20 @@ export const login = asyncHandler(async (req, res) => {
 
 export const getMe = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).select('-password').lean();
+  if (!user) {
+    return res.json({
+      success: true,
+      user: {
+        id: String(req.user._id),
+        name: req.user.role,
+        email: '',
+        role: req.user.role,
+        status: req.user.status || 'active',
+        areaManagerRef: req.user.areaManagerRef || null,
+        dealerRef: req.user.dealerRef || null,
+      },
+    });
+  }
   res.json({ success: true, user: toPublicUser(user) });
 });
 

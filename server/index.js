@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
-import bcrypt from 'bcryptjs';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
@@ -13,9 +12,10 @@ import areaManagerRoutes from './routes/areaManagerRoutes.js';
 import dealerRoutes from './routes/dealerRoutes.js';
 import visitRoutes from './routes/visitRoutes.js';
 import mediaRoutes from './routes/mediaRoutes.js';
+import posterRoutes from './routes/posterRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import { reportRoutes, settingsRouter } from './routes/reportRoutes.js';
-import User from './models/User.js';
+import { ensureDemoUsers } from './utils/ensureDemoUsers.js';
 
 dotenv.config();
 
@@ -35,12 +35,13 @@ app.use('/api/area-managers', areaManagerRoutes);
 app.use('/api/dealers', dealerRoutes);
 app.use('/api/visits', visitRoutes);
 app.use('/api/media', mediaRoutes);
+app.use('/api/posters', posterRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRouter);
 
 app.get('/api/health', (req, res) => {
-  res.json({ success: true, message: 'Vastora CRM API is running' });
+  res.json({ success: true, message: 'Swaraj CRM API is running' });
 });
 
 const clientDist = path.join(__dirname, '../client/dist');
@@ -69,29 +70,16 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-const ensureSuperAdmin = async () => {
-  try {
-    const exists = await User.findOne({ role: 'super_admin' });
-    if (exists) return;
-    const hashedPassword = await bcrypt.hash('super123', 10);
-    await User.create({
-      name: 'Super Admin',
-      email: 'superadmin@vastora.com',
-      password: hashedPassword,
-      role: 'super_admin',
-      status: 'active',
-    });
-    console.log('Default Super Admin created: superadmin@vastora.com / super123');
-  } catch (err) {
-    console.error('Could not ensure Super Admin:', err.message);
-  }
-};
-
 mongoose
   .connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/vastora-crm')
   .then(async () => {
     console.log('MongoDB connected');
-    await ensureSuperAdmin();
+    try {
+      await ensureDemoUsers();
+      console.log('Demo logins ready');
+    } catch (err) {
+      console.error('Demo user setup failed:', err.message);
+    }
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((err) => {

@@ -52,6 +52,16 @@ export const AuthProvider = ({ children }) => {
         setUser(next);
       })
       .catch(() => {
+        try {
+          const saved = localStorage.getItem(AUTH_USER_KEY);
+          const fallback = saved ? normalizeUser(JSON.parse(saved)) : null;
+          if (fallback) {
+            setUser(fallback);
+            return;
+          }
+        } catch {
+          // ignore
+        }
         clearAuthStorage();
         setUser(null);
       })
@@ -59,8 +69,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password, role) => {
-    clearAuthStorage();
-    setUser(null);
     const res = await authAPI.login({ email, password, role });
     const next = normalizeUser(res.data.user);
     if (!next) throw new Error('Invalid login response');

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { reportAPI } from '../services/api';
+import { useLang } from '../shared/context/LanguageContext';
 
 const AuditLogs = () => {
+  const { t } = useLang();
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -11,13 +13,13 @@ const AuditLogs = () => {
 
   return (
     <div>
-      <div className="page-header"><h1>Audit Logs</h1></div>
+      <div className="page-header"><h1>{t('audit.title')}</h1></div>
       <div className="card">
-        {loading ? <div className="loading">Loading...</div> : (
+        {loading ? <div className="loading">{t('loading')}</div> : (
           <div className="table-wrapper">
             <table>
               <thead>
-                <tr><th>User</th><th>Action</th><th>Entity</th><th>Date</th></tr>
+                <tr><th>{t('audit.user')}</th><th>{t('audit.action')}</th><th>{t('audit.entity')}</th><th>{t('date')}</th></tr>
               </thead>
               <tbody>
                 {logs.map((l) => (
@@ -30,7 +32,7 @@ const AuditLogs = () => {
                 ))}
               </tbody>
             </table>
-            {!logs.length && <p className="empty-state">No audit logs</p>}
+            {!logs.length && <p className="empty-state">{t('audit.none')}</p>}
           </div>
         )}
       </div>

@@ -40,6 +40,21 @@ export const updateSettings = asyncHandler(async (req, res) => {
   res.json({ success: true, data: settings });
 });
 
+export const uploadLetterhead = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No picture uploaded' });
+  }
+  let settings = await Settings.findOne();
+  if (!settings) settings = await Settings.create({});
+  const letterhead = {
+    ...(settings.letterhead?.toObject?.() || settings.letterhead || {}),
+    imageUrl: `/uploads/${req.file.filename}`,
+  };
+  settings.letterhead = letterhead;
+  await settings.save();
+  res.json({ success: true, data: settings });
+});
+
 export const getDealerReport = asyncHandler(async (req, res) => {
   const dealers = await Dealer.find()
     .populate('areaManager', 'name employeeId')

@@ -110,7 +110,22 @@ export const reportAPI = {
   getAreaWise: () => api.get('/reports/area-wise'),
 };
 
+export const postersAPI = {
+  sendSheet: (formData) => api.post('/posters/sheets', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  sheets: () => api.get('/posters/sheets'),
+  sheet: (id) => api.get(`/posters/sheets/${id}`),
+  sendToAm: (sheetId) => api.post(`/posters/sheets/${sheetId}/send`),
+  save: (formData) => api.post('/posters/save', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getAll: (params) => api.get('/posters', { params }),
+  review: (id, data) => api.patch(`/posters/${id}/review`, data),
+  update: (id, formData) => api.patch(`/posters/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  bulkDelete: (data) => api.post('/posters/bulk-delete', data),
+  delete: (id) => api.delete(`/posters/${id}`),
+};
+
 export const settingsAPI = {
   get: () => api.get('/settings'),
   update: (data) => api.put('/settings', data),
+  uploadLetterhead: (formData) =>
+    api.post('/settings/letterhead', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 };

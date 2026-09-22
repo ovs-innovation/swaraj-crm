@@ -1,65 +1,60 @@
-.stat-card {
-  background: white;
-  border-radius: 14px;
-  padding: 1.25rem;
-  box-shadow: var(--shadow);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-}
-
-.stat-title {
-  display: block;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  margin-bottom: 0.3rem;
-  font-weight: 600;
-}
-
-.stat-value {
-  font-size: 1.8rem;
-  font-weight: 750;
-  letter-spacing: -0.03em;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-primary .stat-icon {
-  background: rgba(227, 24, 55, 0.1);
-  color: var(--primary);
-}
-
-.stat-blue .stat-icon {
-  background: rgba(37, 99, 235, 0.1);
-  color: #2563eb;
-}
-
-.stat-green .stat-icon {
-  background: rgba(22, 163, 74, 0.1);
-  color: var(--success);
-}
-
-.stat-orange .stat-icon {
-  background: rgba(217, 119, 6, 0.1);
-  color: var(--warning);
-}
-
-.stat-purple .stat-icon {
-  background: rgba(124, 58, 237, 0.1);
-  color: #7c3aed;
-}
-
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 1.15rem;
+}
+
+.metric {
+  background: #fff;
+  border: 1px solid #e6dfd8;
+  border-radius: 2px;
+  padding: 0.9rem 0.95rem 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  min-height: 88px;
+  box-shadow: none;
+}
+
+.metric-plain {
+  border-top: 3px solid #0078D4;
+}
+
+.metric-warn {
+  border-top: 3px solid #a16207;
+}
+
+.metric-mute {
+  border-top: 3px solid #8a8178;
+}
+
+.metric-ok {
+  border-top: 3px solid #3f6212;
+}
+
+.metric-k {
+  display: block;
+  font-size: 0.72rem;
+  color: #6a625a;
+  font-weight: 600;
+  line-height: 1.35;
+  max-width: 11.5rem;
+}
+
+.metric-v {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #1c1917;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.metric-i {
+  color: #b7aea6;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
 }

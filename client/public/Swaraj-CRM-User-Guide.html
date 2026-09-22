@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Swaraj Dealer CRM — How the system works</title>
+  <style>
+    :root { --red: #0078D4; --gold: #1B365D; --ink: #1c1917; --muted: #6a625a; --line: #e6dfd8; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Inter, "Noto Sans Devanagari", sans-serif;
+      color: var(--ink);
+      background: #f3eee9;
+      line-height: 1.55;
+      font-size: 15px;
+    }
+    .wrap { max-width: 820px; margin: 0 auto; padding: 1.5rem 1.1rem 3rem; }
+    .bar {
+      background: linear-gradient(90deg, #003d73, #0078D4 50%, #1B365D);
+      color: #fff;
+      padding: 1.35rem 1.5rem;
+      border-radius: 2px;
+    }
+    .bar small { letter-spacing: .14em; text-transform: uppercase; opacity: .85; font-size: .72rem; }
+    .bar h1 { margin: .25rem 0 0; font-size: 1.55rem; }
+    .actions { display: flex; gap: .5rem; flex-wrap: wrap; margin: 1rem 0 1.4rem; }
+    .btn {
+      border: 0; cursor: pointer; padding: .5rem 1rem; font-weight: 700;
+      background: var(--red); color: #fff; border-radius: 2px; font-size: .85rem;
+    }
+    .btn.ghost { background: #fff; color: var(--red); border: 1px solid var(--line); }
+    .card { background: #fff; border: 1px solid var(--line); padding: 1.15rem 1.25rem; margin-bottom: 1rem; }
+    h2 { font-size: 1.05rem; color: var(--red); margin: 0 0 .65rem; border-bottom: 2px solid var(--gold); padding-bottom: .35rem; }
+    h3 { font-size: .92rem; margin: 1rem 0 .35rem; }
+    p, li { color: #2b2622; }
+    ol, ul { padding-left: 1.2rem; }
+    .roles { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+    .role { border: 1px solid var(--line); padding: .7rem .8rem; background: #faf7f3; }
+    .role b { display: block; color: var(--red); }
+    .flow { font-family: ui-monospace, Consolas, monospace; font-size: .82rem; background: #1c1917; color: #f8e7c1; padding: .9rem 1rem; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+    th, td { border-bottom: 1px solid var(--line); text-align: left; padding: .45rem .4rem; vertical-align: top; }
+    th { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .note { background: #fff8ee; border: 1px solid #f0e0c8; padding: .7rem .85rem; font-size: .88rem; }
+    .hi { font-family: "Noto Sans Devanagari", "Segoe UI", sans-serif; }
+    @media print {
+      .actions, .no-print { display: none !important; }
+      body { background: #fff; }
+      .wrap { max-width: none; padding: 0; }
+      .card { break-inside: avoid; border: 0; padding: .6rem 0; }
+      .bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+    @media (max-width: 640px) { .roles { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="bar">
+      <small>Mahindra &amp; Mahindra Ltd. · Swaraj Division</small>
+      <h1>Swaraj Dealer CRM — User Guide</h1>
+      <p style="margin:.4rem 0 0;opacity:.92;font-size:.9rem">How Super Admin, Head Office, Area Manager and Dealer work together.</p>
+    </header>
+    <div class="actions no-print">
+      <button class="btn" type="button" onclick="window.print()">Download / Print PDF</button>
+      <a class="btn ghost" href="/">Open CRM</a>
+    </div>
+
+    <section class="card">
+      <h2>1. Idea of the product</h2>
+      <p>Swaraj Dealer CRM is the internal tool for the dealer network. Head office sees the full country picture. Area managers run their own dealers. Dealers upload shop/event media. Super Admin controls branding and dealer posters made from Excel lists.</p>
+      <p class="hi"><strong>हिन्दी:</strong> यह सिस्टम डीलर नेटवर्क चलाने के लिए है. सुपर एडमिन पूरा कंट्रोल, हेड ऑफिस फील्ड ऑपरेशन, एरिया मैनेजर अपने डीलर, डीलर अपनी दुकान की फोटो/वीडियो.</p>
+    </section>
+
+    <section class="card">
+      <h2>2. Four roles</h2>
+      <div class="roles">
+        <div class="role"><b>Super Admin</b>Highest access. HQ users, letterhead (header/footer on pictures), dealer posters, everything Head Office can do.</div>
+        <div class="role"><b>Head Office Admin</b>Area managers, all dealers, visits, media, reports, audit, settings. Can also create posters from AM sheets.</div>
+        <div class="role"><b>Area Manager</b>Only their dealers. Create/edit dealers, log visits, approve dealer uploads, send Excel lists, approve posters made from their Excel.</div>
+        <div class="role"><b>Dealer</b>Own profile, upload photos/videos, see approved posts, visit history. Cannot see other dealers or other areas.</div>
+      </div>
+      <p>Login: choose the role card (no password screen). Session stays on refresh; it does not jump to another profile.</p>
+    </section>
+
+    <section class="card">
+      <h2>3. How people move through the app</h2>
+      <div class="flow">Dealer uploads media
+   → Area Manager approves / rejects
+   → Approved posts are visible
+
+Area Manager uploads Excel of dealers
+   → Super Admin / HO opens that sheet only
+   → Maps columns + picture → 8K posters
+   → Sends for approval to THE SAME Area Manager
+   → That AM approves / rejects
+   → Never sent to another AM</div>
+    </section>
+
+    <section class="card">
+      <h2>4. Super Admin panel</h2>
+      <ol>
+        <li><strong>Dashboard</strong> — totals, dealers per AM chart, HQ users, activity.</li>
+        <li><strong>Header / Footer</strong> — upload a full picture, drag texts, fonts, colours, sizes. Download HD/8K PNG. This layout is used on bulk posters.</li>
+        <li><strong>Dealer posters</strong> — inbox of Excel files from area managers. Open a sheet → map Name / Address / Phone / Website → Create posters → confirm → progress bar. Then <em>Send to this area manager for approval</em> (confirm). Edit / delete / bulk delete with confirm. Full preview with previous/next.</li>
+        <li><strong>HQ Users</strong> — create Head Office / Super Admin logins.</li>
+        <li>Also: Area Managers, Dealers (all India), Visits, Posts &amp; Media, Reports (tables + charts), Audit logs, Settings.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>5. Head Office Admin panel</h2>
+      <ol>
+        <li>Dashboard: area managers, dealers, pending media, visits, state chart, visit trend.</li>
+        <li>Create and manage Area Managers and Dealers; assign a dealer to an AM (confirm first).</li>
+        <li>Visits for the network. Media: HQ posts go live; they can also approve.</li>
+        <li>Same dealer-poster inbox as Super Admin if they open Dealer posters.</li>
+        <li>Reports export CSV. Delete actions always ask confirmation.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>6. Area Manager panel</h2>
+      <ol>
+        <li><strong>My dealers</strong> — add/edit dealers in their area only.</li>
+        <li><strong>Visits</strong> — record field visits.</li>
+        <li><strong>Approve uploads</strong> — only dealer media from their dealers. Confirm before approve/reject.</li>
+        <li><strong>Excel &amp; posters</strong> — upload .xlsx / .xls / .csv (confirm). Super Admin parses it. When HQ sends posters back, they appear here for approval. AM never sees another area’s posters.</li>
+        <li>AM does not design posters and does not upload marketing posts (dealers upload; AM approves).</li>
+      </ol>
+      <div class="note">Excel tip: keep a header row with columns like Name, Address, Phone Number, Website. Extra title rows above the table are skipped.</div>
+    </section>
+
+    <section class="card">
+      <h2>7. Dealer panel</h2>
+      <ol>
+        <li>Dashboard: own stats, Area Manager contact, recent uploads and visits.</li>
+        <li>Profile: shop details.</li>
+        <li>Upload video/photo from shop, mela, demo — goes to AM as pending.</li>
+        <li>Approved posts: only live content. Visit history: AM visits to this dealer.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h2>8. Important rules</h2>
+      <table>
+        <thead><tr><th>Rule</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Posters follow the Excel owner</td><td>The AM who uploaded the sheet is the only AM who can approve those posters.</td></tr>
+          <tr><td>Confirm before share / delete</td><td>Create posters, send to AM, Excel send, assign dealer, delete, approve/reject.</td></tr>
+          <tr><td>English / हिन्दी switch</td><td>Top bar. Choice is remembered.</td></tr>
+          <tr><td>Do not mix roles on one browser session</td><td>Log out, then pick another role.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card hi">
+      <h2>9. छोटा हिंदी सार</h2>
+      <ul>
+        <li>डीलर फोटो/वीडियो भेजता है → एरिया मैनेजर अप्रूव करता है.</li>
+        <li>एरिया मैनेजर Excel भेजता है → सुपर एडमिन पोस्टर बनाता है → उसी एरिया मैनेजर को अप्रूवल.</li>
+        <li>दूसरे क्षेत्र का पोस्टर किसी और AM को नहीं जाता.</li>
+        <li>कुछ भी शेयर/डिलीट से पहले कन्फर्म बॉक्स आता है.</li>
+      </ul>
+    </section>
+
+    <p class="muted" style="font-size:.8rem;color:#6a625a">Swaraj Dealer CRM · internal guide · print this page as PDF (Save as PDF in the print dialog).</p>
+  </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 {
   "name": "vastora-crm",
   "version": "1.0.0",
-  "description": "Vastora Dealer CRM - Area Manager & Dealer Management",
+  "description": "Swaraj Dealer CRM - Area Manager & Dealer Management",
   "private": true,
   "scripts": {
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",

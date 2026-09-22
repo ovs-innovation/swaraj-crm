@@ -3,6 +3,7 @@ import {
   getAuditLogs,
   getSettings,
   updateSettings,
+  uploadLetterhead,
   getDealerReport,
   getVisitReport,
   getUploadReport,
@@ -10,6 +11,7 @@ import {
   getAreaWiseReport,
 } from '../controllers/reportController.js';
 import { protect, authorize } from '../middleware/auth.js';
+import { upload } from '../middleware/upload.js';
 
 const router = Router();
 
@@ -26,5 +28,6 @@ const settingsRouter = Router();
 settingsRouter.use(protect);
 settingsRouter.get('/', getSettings);
 settingsRouter.put('/', authorize('admin'), updateSettings);
+settingsRouter.post('/letterhead', authorize('super_admin'), upload.single('file'), uploadLetterhead);
 
 export { router as reportRoutes, settingsRouter };

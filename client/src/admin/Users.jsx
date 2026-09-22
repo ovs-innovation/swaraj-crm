@@ -3,11 +3,14 @@ import { Plus, Search, Crown } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { usersAPI } from '../services/api';
 import { useAuth } from '../shared/context/AuthContext';
+import { useLang } from '../shared/context/LanguageContext';
+import ConfirmDialog from '../shared/components/ConfirmDialog';
 
 const emptyForm = { name: '', email: '', password: '', role: 'admin' };
 
 const Users = () => {
   const { isSuperAdmin } = useAuth();
+  const { t } = useLang();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -15,6 +18,7 @@ const Users = () => {
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState('');
+  const [ask, setAsk] = useState(null);
 
   const fetchUsers = () => {
     setLoading(true);
@@ -50,44 +54,51 @@ const Users = () => {
     fetchUsers();
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this user?')) return;
-    try {
-      await usersAPI.delete(id);
-      fetchUsers();
-    } catch (err) {
-      alert(err.response?.data?.message || 'Delete failed');
-    }
+  const handleDelete = (id) => {
+    setAsk({
+      title: t('delete'),
+      message: t('users.confirmDelete'),
+      run: async () => {
+        try {
+          await usersAPI.delete(id);
+          fetchUsers();
+        } catch (err) {
+          alert(err.response?.data?.message || 'Delete failed');
+        } finally {
+          setAsk(null);
+        }
+      },
+    });
   };
 
   return (
     <div>
       <div className="page-header">
         <div>
-          <h1>HQ Users</h1>
-          <p className="page-subtitle">Create and manage Super Admins and Head Office Admins</p>
+          <h1>{t('users.title')}</h1>
+          <p className="page-subtitle">{t('users.sub')}</p>
         </div>
         <button className="btn btn-primary" onClick={() => { setShowModal(true); setEditId(null); setForm(emptyForm); }}>
-          <Plus size={18} /> Add Admin
+          <Plus size={18} /> {t('users.add')}
         </button>
       </div>
 
       <div className="search-bar">
         <Search size={18} />
-        <input type="text" placeholder="Search by name or email..." value={search} onChange={(e) => setSearch(e.target.value)} />
+        <input type="text" placeholder={t('users.search')} value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
 
       <div className="card">
-        {loading ? <div className="loading">Loading...</div> : (
+        {loading ? <div className="loading">{t('loading')}</div> : (
           <div className="table-wrapper">
             <table>
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th>{t('name')}</th>
+                  <th>{t('email')}</th>
+                  <th>{t('users.role')}</th>
+                  <th>{t('status')}</th>
+                  <th>{t('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -99,22 +110,22 @@ const Users = () => {
                     <td>{u.email}</td>
                     <td>
                       <span className={`badge ${u.role === 'super_admin' ? 'badge-super' : 'badge-active'}`}>
-                        {u.role === 'super_admin' ? <><Crown size={12} /> Super Admin</> : 'Admin'}
+                        {u.role === 'super_admin' ? <><Crown size={12} /> {t('roles.super_admin')}</> : t('roles.admin')}
                       </span>
                     </td>
-                    <td><span className={`badge badge-${u.status}`}>{u.status}</span></td>
+                    <td><span className={`badge badge-${u.status}`}>{t(u.status)}</span></td>
                     <td>
                       <div className="row-actions">
-                        <button className="btn btn-sm btn-outline" onClick={() => { setForm({ name: u.name, email: u.email, password: '', role: u.role }); setEditId(u._id); setShowModal(true); }}>Edit</button>
-                        <button className="btn btn-sm btn-outline" onClick={() => handleToggle(u._id)}>{u.status === 'active' ? 'Deactivate' : 'Activate'}</button>
-                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u._id)}>Delete</button>
+                        <button className="btn btn-sm btn-outline" onClick={() => { setForm({ name: u.name, email: u.email, password: '', role: u.role }); setEditId(u._id); setShowModal(true); }}>{t('edit')}</button>
+                        <button className="btn btn-sm btn-outline" onClick={() => handleToggle(u._id)}>{u.status === 'active' ? t('users.deactivate') : t('users.activate')}</button>
+                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u._id)}>{t('delete')}</button>
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {!users.length && <p className="empty-state">No HQ users found</p>}
+            {!users.length && <p className="empty-state">{t('noData')}</p>}
           </div>
         )}
       </div>
@@ -122,30 +133,38 @@ const Users = () => {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{editId ? 'Edit' : 'Add'} HQ User</h2>
+            <h2>{editId ? t('users.editTitle') : t('users.addTitle')}</h2>
             {error && <div className="alert alert-error">{error}</div>}
             <form onSubmit={handleSubmit}>
-              <div className="form-group"><label>Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
-              <div className="form-group"><label>Email</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
+              <div className="form-group"><label>{t('name')}</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
+              <div className="form-group"><label>{t('email')}</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
               <div className="form-group">
-                <label>Role</label>
+                <label>{t('users.role')}</label>
                 <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-                  <option value="admin">Head Office Admin</option>
-                  <option value="super_admin">Super Admin</option>
+                  <option value="admin">{t('roles.admin')}</option>
+                  <option value="super_admin">{t('roles.super_admin')}</option>
                 </select>
               </div>
               <div className="form-group">
-                <label>{editId ? 'New Password (optional)' : 'Password'}</label>
+                <label>{editId ? t('users.newPassword') : t('users.password')}</label>
                 <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required={!editId} minLength={6} />
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">{editId ? 'Update' : 'Create'}</button>
+                <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>{t('cancel')}</button>
+                <button type="submit" className="btn btn-primary">{editId ? t('update') : t('create')}</button>
               </div>
             </form>
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!ask}
+        title={ask?.title}
+        message={ask?.message}
+        danger
+        onClose={() => setAsk(null)}
+        onConfirm={() => ask?.run?.()}
+      />
     </div>
   );
 };

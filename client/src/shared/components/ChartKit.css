@@ -1,0 +1,80 @@
+.chart-shell {
+  width: 100%;
+}
+
+.chart-tip {
+  background: #1c1917;
+  color: #faf7f4;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  min-width: 108px;
+  box-shadow: 0 12px 28px rgba(28, 25, 23, 0.32);
+  border: 1px solid rgba(201, 162, 39, 0.35);
+}
+
+.chart-tip span {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.72;
+  margin-bottom: 0.2rem;
+}
+
+.chart-tip strong {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.chart-tip em {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.78rem;
+  opacity: 0.8;
+}
+
+.chart-empty {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #8a8178;
+  font-size: 0.88rem;
+  background: repeating-linear-gradient(-45deg, #faf7f3, #faf7f3 8px, #f3eee9 8px, #f3eee9 16px);
+  border-radius: 10px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #e6dfd8;
+  border-radius: 2px;
+  padding: 1.05rem 1.1rem 0.85rem;
+}
+
+.panel-title {
+  margin: 0 0 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #4a433c;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid #efe8e2;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.35rem;
+}
+
+.panel-head .panel-title {
+  margin-bottom: 0.55rem;
+  flex: 1;
+}
+
+html[data-lang='hi'] .panel-title {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}

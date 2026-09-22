@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { dealerAPI } from '../../services/api';
 import MediaPreview from '../components/MediaPreview';
+import { useLang } from '../context/LanguageContext';
 
 const DealerProfile = () => {
+  const { t } = useLang();
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,8 +15,8 @@ const DealerProfile = () => {
     dealerAPI.getProfile(id).then((res) => setData(res.data.data)).finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="loading">Loading profile...</div>;
-  if (!data) return <div className="empty-state">Dealer not found</div>;
+  if (loading) return <div className="loading">{t('loading')}</div>;
+  if (!data) return <div className="empty-state">{t('loadFail')}</div>;
 
   const { dealer, visits, media, activities, assignmentHistory } = data;
 
@@ -25,13 +27,13 @@ const DealerProfile = () => {
           <h1>{dealer.dealerName}</h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{dealer.dealerCode} · {dealer.state}, {dealer.district}</p>
         </div>
-        <span className={`badge badge-${dealer.status}`}>{dealer.status}</span>
+        <span className={`badge badge-${dealer.status}`}>{t(dealer.status)}</span>
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        {['info', 'visits', 'media', 'activity', 'assignments'].map((t) => (
-          <button key={t} className={`btn btn-sm ${tab === t ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTab(t)}>
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+        {['info', 'visits', 'media', 'activity', 'assignments'].map((key) => (
+          <button key={key} className={`btn btn-sm ${tab === key ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTab(key)}>
+            {t(`profile.${key}`)}
           </button>
         ))}
       </div>

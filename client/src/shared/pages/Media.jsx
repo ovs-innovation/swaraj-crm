@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { Upload, Check, X } from 'lucide-react';
 import { mediaAPI, dealerAPI } from '../../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLang } from '../context/LanguageContext';
 import MediaPreview from '../components/MediaPreview';
+import ConfirmDialog from '../components/ConfirmDialog';
 
 /**
  * Modes:
@@ -13,6 +15,7 @@ import MediaPreview from '../components/MediaPreview';
  */
 const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode = false, dealerPostsMode = false }) => {
   const { isAdmin, isDealer, user } = useAuth();
+  const { t } = useLang();
   const [media, setMedia] = useState([]);
   const [dealers, setDealers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +24,8 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
   const [file, setFile] = useState(null);
   const [form, setForm] = useState({ dealer: '', description: '', location: '' });
   const [filter, setFilter] = useState(approvalMode ? 'pending' : dealerPostsMode ? 'approved' : '');
+  const [ask, setAsk] = useState(null);
+  const [selected, setSelected] = useState([]);
 
   const fetchMedia = (silent = false) => {
     if (!silent) setLoading(true);
@@ -51,51 +56,67 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
   };
 
   const handleApprove = async (id, status) => {
-    let comment = '';
-    if (status === 'rejected') {
-      const reason = prompt('Rejection reason:');
-      if (reason === null) return;
-      comment = reason;
-    }
-    const previous = media;
-    setBusyId(id);
-    setMedia((list) =>
-      list.map((item) => (item._id === id ? { ...item, status } : item)).filter((item) => {
-        if (!filter) return true;
-        return item.status === filter;
-      })
-    );
-    try {
-      await mediaAPI.approve(id, { status, adminComment: comment });
-    } catch (err) {
-      setMedia(previous);
-      alert(err.response?.data?.message || 'Could not update');
-    } finally {
-      setBusyId('');
-    }
+    const item = media.find((m) => m._id === id);
+    setAsk({
+      title: status === 'rejected' ? t('rejected') : t('approved'),
+      message: status === 'rejected'
+        ? t('media.confirmReject').replace('{name}', item?.dealer?.dealerName || '')
+        : t('media.confirmApprove').replace('{name}', item?.dealer?.dealerName || ''),
+      danger: status === 'rejected',
+      run: async () => {
+        const previous = media;
+        setBusyId(id);
+        setMedia((list) =>
+          list.map((row) => (row._id === id ? { ...row, status } : row)).filter((row) => {
+            if (!filter) return true;
+            return row.status === filter;
+          })
+        );
+        try {
+          await mediaAPI.approve(id, { status, adminComment: '' });
+        } catch (err) {
+          setMedia(previous);
+          alert(err.response?.data?.message || 'Could not update');
+        } finally {
+          setBusyId('');
+          setAsk(null);
+        }
+      },
+    });
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Delete this upload?')) return;
+  const doDelete = async (ids) => {
     const previous = media;
-    setMedia((list) => list.filter((item) => item._id !== id));
+    setMedia((list) => list.filter((item) => !ids.includes(item._id)));
     try {
-      await mediaAPI.delete(id);
+      await Promise.all(ids.map((id) => mediaAPI.delete(id)));
+      setSelected([]);
     } catch (err) {
       setMedia(previous);
       alert(err.response?.data?.message || 'Delete failed');
+    } finally {
+      setAsk(null);
     }
   };
 
+  const handleDelete = (id) => {
+    setAsk({
+      title: t('delete'),
+      message: t('media.confirmDelete'),
+      danger: true,
+      run: () => doDelete([id]),
+    });
+  };
+
   const title = adminMode
-    ? 'Posts & Media'
+    ? t('media.posts')
     : approvalMode
-      ? 'Approve Dealer Uploads'
+      ? t('media.approve')
       : dealerUploadMode
-        ? 'Upload Video / Photo'
+        ? t('media.upload')
         : dealerPostsMode
-          ? 'Approved Posts'
-          : 'Media';
+          ? t('media.approvedPosts')
+          : t('media.posts');
 
   const canUpload = adminMode || dealerUploadMode;
   const canApprove = (adminMode || approvalMode);
@@ -110,28 +131,71 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
       <div className="page-header">
         <div>
           <h1>{title}</h1>
-          {adminMode && <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Upload marketing posts · View & manage all media</p>}
-          {approvalMode && <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Review videos/photos uploaded by your dealers</p>}
-          {dealerUploadMode && <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Upload from shop, event or any location — Area Manager will approve</p>}
+          {adminMode && <p className="page-subtitle">{t('media.adminSub')}</p>}
+          {approvalMode && <p className="page-subtitle">{t('media.amSub')}</p>}
+          {dealerUploadMode && <p className="page-subtitle">{t('media.dealerSub')}</p>}
         </div>
         {canUpload && (
           <button className="btn btn-primary" onClick={() => setShowUpload(true)}>
-            <Upload size={18} /> {adminMode ? 'Upload Post' : 'Upload'}
+            <Upload size={18} /> {adminMode ? t('media.uploadPost') : t('media.upload')}
           </button>
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
         {filters.map((s) => (
           <button key={s || 'all'} className={`btn btn-sm ${filter === s ? 'btn-primary' : 'btn-outline'}`} onClick={() => setFilter(s)}>
-            {s === 'pending' ? 'Pending' : s === 'approved' ? 'Approved' : s === 'rejected' ? 'Rejected' : 'All'}
+            {s === 'pending' ? t('pending') : s === 'approved' ? t('approved') : s === 'rejected' ? t('rejected') : t('all')}
           </button>
         ))}
+        {isAdmin && media.length > 0 && (
+          <>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.85rem' }}>
+              <input
+                type="checkbox"
+                checked={media.length > 0 && selected.length === media.length}
+                onChange={() => setSelected(selected.length === media.length ? [] : media.map((m) => m._id))}
+              />
+              {t('selectAll')}
+            </label>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline"
+              disabled={!selected.length}
+              onClick={() => setAsk({
+                title: t('deleteSelected'),
+                message: t('media.confirmBulk').replace('{n}', String(selected.length)),
+                danger: true,
+                run: () => doDelete(selected),
+              })}
+            >
+              {t('deleteSelected')} ({selected.length})
+            </button>
+            <button
+              type="button"
+              className="btn btn-sm btn-danger"
+              onClick={() => setAsk({
+                title: t('deleteAll'),
+                message: t('media.confirmBulk').replace('{n}', String(media.length)),
+                danger: true,
+                run: () => doDelete(media.map((m) => m._id)),
+              })}
+            >
+              {t('deleteAll')}
+            </button>
+          </>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1rem' }}>
-        {loading ? <div className="loading">Loading...</div> : media.map((m) => (
+        {loading ? <div className="loading">{t('loading')}</div> : media.map((m) => (
           <div key={m._id} className="card">
+            {isAdmin && (
+              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', marginBottom: 6 }}>
+                <input type="checkbox" checked={selected.includes(m._id)} onChange={() => setSelected((cur) => (cur.includes(m._id) ? cur.filter((id) => id !== m._id) : [...cur, m._id]))} />
+                {t('select')}
+              </label>
+            )}
             {m.type === 'image' || m.type === 'video' ? (
               <MediaPreview item={m} height={160} />
             ) : (
@@ -141,13 +205,13 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
             )}
             <p style={{ fontSize: '0.85rem', margin: '0.5rem 0' }}>
               <strong>{m.dealer?.dealerName}</strong>
-              {m.uploadSource && <span className={`badge badge-${m.uploadSource === 'admin' ? 'approved' : 'pending'}`} style={{ marginLeft: 6 }}>{m.uploadSource === 'admin' ? 'Admin Post' : 'Dealer'}</span>}
+              {m.uploadSource && <span className={`badge badge-${m.uploadSource === 'admin' ? 'approved' : 'pending'}`} style={{ marginLeft: 6 }}>{m.uploadSource === 'admin' ? t('roles.admin') : t('roles.dealer')}</span>}
             </p>
             {m.location && <p style={{ fontSize: '0.8rem' }}>📍 {m.location}</p>}
             <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{m.description || 'No description'}</p>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>By: {m.uploadedBy?.name} ({m.uploadedBy?.role?.replace('_', ' ')})</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('media.by')}: {m.uploadedBy?.name}</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.25rem' }}>
-              <span className={`badge badge-${m.status}`}>{m.status}</span>
+              <span className={`badge badge-${m.status}`}>{t(m.status)}</span>
               <div style={{ display: 'flex', gap: '0.25rem' }}>
                 {canApprove && m.status === 'pending' && (!approvalMode || m.uploadSource === 'dealer') && (
                   <>
@@ -156,60 +220,68 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
                   </>
                 )}
                 {isAdmin && (
-                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(m._id)}>Delete</button>
+                  <button className="btn btn-sm btn-danger" onClick={() => handleDelete(m._id)}>{t('delete')}</button>
                 )}
                 {isDealer && m.status === 'pending' && String(m.uploadedBy?._id || m.uploadedBy) === String(user?.id) && (
-                  <button className="btn btn-sm btn-outline" onClick={() => handleDelete(m._id)}>Delete</button>
+                  <button className="btn btn-sm btn-outline" onClick={() => handleDelete(m._id)}>{t('delete')}</button>
                 )}
               </div>
             </div>
           </div>
         ))}
       </div>
-      {!loading && !media.length && <p className="empty-state">No media found</p>}
+      {!loading && !media.length && <p className="empty-state">{t('noData')}</p>}
 
       {showUpload && (
         <div className="modal-overlay" onClick={() => setShowUpload(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{adminMode ? 'Upload Post' : 'Upload Video / Photo'}</h2>
+            <h2>{adminMode ? t('media.uploadPost') : t('media.upload')}</h2>
             <form onSubmit={handleUpload}>
               {adminMode && (
                 <div className="form-group">
-                  <label>Dealer</label>
+                  <label>{t('dealers.title')}</label>
                   <select value={form.dealer} onChange={(e) => setForm({ ...form, dealer: e.target.value })} required>
-                    <option value="">Select Dealer</option>
+                    <option value="">{t('visits.selectDealer')}</option>
                     {dealers.map((d) => <option key={d._id} value={d._id}>{d.dealerName}</option>)}
                   </select>
                 </div>
               )}
               {dealerUploadMode && (
                 <div className="form-group">
-                  <label>Location / Place</label>
+                  <label>{t('media.location')}</label>
                   <input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="e.g. Shop front, Mela, Demo site" />
                 </div>
               )}
               <div className="form-group">
-                <label>File</label>
+                <label>{t('media.file')}</label>
                 <input type="file" accept="image/*,video/*" onChange={(e) => setFile(e.target.files[0])} required />
               </div>
               <div className="form-group">
-                <label>Description</label>
+                <label>{t('media.description')}</label>
                 <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={dealerUploadMode ? 'What is this video/photo about?' : ''} />
               </div>
               {adminMode && (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Admin posts are published immediately (auto-approved).</p>
+                <p className="page-subtitle">{t('media.adminNote')}</p>
               )}
               {dealerUploadMode && (
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Your Area Manager will review and approve this upload.</p>
+                <p className="page-subtitle">{t('media.dealerNote')}</p>
               )}
               <div className="modal-actions">
-                <button type="button" className="btn btn-outline" onClick={() => setShowUpload(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Upload</button>
+                <button type="button" className="btn btn-outline" onClick={() => setShowUpload(false)}>{t('cancel')}</button>
+                <button type="submit" className="btn btn-primary">{t('media.upload')}</button>
               </div>
             </form>
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!ask}
+        title={ask?.title}
+        message={ask?.message}
+        danger={ask?.danger}
+        onClose={() => setAsk(null)}
+        onConfirm={() => ask?.run?.()}
+      />
     </div>
   );
 };

@@ -89,7 +89,7 @@ const seed = async () => {
 
   await Dealer.insertMany([
     {
-      dealerName: 'Vastora Tractors Ludhiana',
+      dealerName: 'Swaraj Tractors Ludhiana',
       dealerCode: 'DLR001',
       contactPerson: 'Amit Sharma',
       mobile: '9812345678',
@@ -104,7 +104,7 @@ const seed = async () => {
       status: 'active',
     },
     {
-      dealerName: 'Vastora Karnal',
+      dealerName: 'Swaraj Karnal',
       dealerCode: 'DLR002',
       contactPerson: 'Vikram Singh',
       mobile: '9812345679',
@@ -119,7 +119,7 @@ const seed = async () => {
       status: 'active',
     },
     {
-      dealerName: 'Punjab Agro Dealers',
+      dealerName: 'Swaraj Agro Dealers',
       dealerCode: 'DLR003',
       contactPerson: 'Harpreet Kaur',
       mobile: '9812345680',
@@ -145,9 +145,10 @@ const seed = async () => {
   });
 
   await Settings.create({
-    companyName: 'Vastora',
-    companyEmail: 'info@vastora.com',
-    companyPhone: '1800-XXX-XXXX',
+    companyName: 'Swaraj',
+    companyEmail: 'info@swarajtractors.com',
+    companyPhone: '1800 425 0735',
+    companyAddress: 'Swaraj Division, Mahindra & Mahindra Ltd., Phase IV, Industrial Area, S.A.S Nagar (Mohali), Punjab - 160055',
   });
 
   console.log('Seed data created successfully!');

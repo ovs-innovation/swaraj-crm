@@ -10,6 +10,9 @@ import AreaManagers from './admin/AreaManagers';
 import AuditLogs from './admin/AuditLogs';
 import Settings from './admin/Settings';
 import Users from './admin/Users';
+import LetterheadEditor from './admin/LetterheadEditor';
+import BulkPosters from './shared/pages/BulkPosters';
+import AmSheetUpload from './area-manager/SheetUpload';
 
 import AreaManagerDashboard from './area-manager/Dashboard';
 import DealerDashboard from './dealer/Dashboard';
@@ -39,6 +42,8 @@ const App = () => (
     <Route element={<ProtectedRoute roles={['super_admin']} />}>
       <Route element={<Layout />}>
         <Route path="/super-admin" element={<SuperAdminDashboard />} />
+        <Route path="/super-admin/letterhead" element={<LetterheadEditor />} />
+        <Route path="/super-admin/posters" element={<BulkPosters />} />
       </Route>
     </Route>
 
@@ -51,6 +56,7 @@ const App = () => (
         <Route path="/admin/dealers/:id" element={<DealerProfile />} />
         <Route path="/admin/visits" element={<Visits />} />
         <Route path="/admin/media" element={<MediaPage adminMode />} />
+        <Route path="/admin/posters" element={<BulkPosters />} />
         <Route path="/admin/reports" element={<Reports />} />
         <Route path="/admin/audit-logs" element={<AuditLogs />} />
         <Route path="/admin/settings" element={<Settings />} />
@@ -64,6 +70,7 @@ const App = () => (
         <Route path="/area-manager/dealers/:id" element={<DealerProfile />} />
         <Route path="/area-manager/visits" element={<Visits />} />
         <Route path="/area-manager/media" element={<MediaPage approvalMode />} />
+        <Route path="/area-manager/sheet" element={<AmSheetUpload />} />
         <Route path="/area-manager/reports" element={<Reports />} />
       </Route>
     </Route>

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { dealerAPI } from '../services/api';
 import MediaPreview from '../shared/components/MediaPreview';
+import { useLang } from '../shared/context/LanguageContext';
 
 const DealerProfilePage = () => {
+  const { t } = useLang();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('info');
@@ -11,8 +13,8 @@ const DealerProfilePage = () => {
     dealerAPI.getMyProfile().then((res) => setData(res.data.data)).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading">Loading profile...</div>;
-  if (!data) return <div className="empty-state">Profile not found</div>;
+  if (loading) return <div className="loading">{t('loading')}</div>;
+  if (!data) return <div className="empty-state">{t('loadFail')}</div>;
 
   const { dealer, visits, media } = data;
 
@@ -20,16 +22,16 @@ const DealerProfilePage = () => {
     <div>
       <div className="page-header">
         <div>
-          <h1>My Profile</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{dealer.dealerName} · {dealer.dealerCode}</p>
+          <h1>{t('profile.title')}</h1>
+          <p className="page-subtitle">{dealer.dealerName} · {dealer.dealerCode}</p>
         </div>
-        <span className={`badge badge-${dealer.status}`}>{dealer.status}</span>
+        <span className={`badge badge-${dealer.status}`}>{t(dealer.status)}</span>
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        {['info', 'visits', 'posts'].map((t) => (
-          <button key={t} className={`btn btn-sm ${tab === t ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTab(t)}>
-            {t === 'posts' ? 'Approved Posts' : t.charAt(0).toUpperCase() + t.slice(1)}
+        {['info', 'visits', 'posts'].map((key) => (
+          <button key={key} className={`btn btn-sm ${tab === key ? 'btn-primary' : 'btn-outline'}`} onClick={() => setTab(key)}>
+            {key === 'posts' ? t('profile.posts') : key === 'visits' ? t('profile.visits') : t('profile.info')}
           </button>
         ))}
       </div>
@@ -37,14 +39,14 @@ const DealerProfilePage = () => {
       {tab === 'info' && (
         <div className="card">
           <div className="form-row">
-            <div><strong>Contact Person</strong><p>{dealer.contactPerson}</p></div>
-            <div><strong>Mobile</strong><p>{dealer.mobile}</p></div>
-            <div><strong>Email</strong><p>{dealer.email || '—'}</p></div>
-            <div><strong>Area Manager</strong><p>{dealer.areaManager?.name || '—'}</p></div>
-            <div><strong>Address</strong><p>{dealer.address || '—'}</p></div>
-            <div><strong>City</strong><p>{dealer.city || '—'}</p></div>
-            <div><strong>State</strong><p>{dealer.state}</p></div>
-            <div><strong>District</strong><p>{dealer.district}</p></div>
+            <div><strong>{t('profile.contact')}</strong><p>{dealer.contactPerson}</p></div>
+            <div><strong>{t('mobile')}</strong><p>{dealer.mobile}</p></div>
+            <div><strong>{t('email')}</strong><p>{dealer.email || '—'}</p></div>
+            <div><strong>{t('profile.am')}</strong><p>{dealer.areaManager?.name || '—'}</p></div>
+            <div><strong>{t('profile.address')}</strong><p>{dealer.address || '—'}</p></div>
+            <div><strong>{t('dealers.city')}</strong><p>{dealer.city || '—'}</p></div>
+            <div><strong>{t('dealers.state')}</strong><p>{dealer.state}</p></div>
+            <div><strong>{t('dealers.district')}</strong><p>{dealer.district}</p></div>
           </div>
         </div>
       )}
@@ -53,18 +55,18 @@ const DealerProfilePage = () => {
         <div className="card">
           <div className="table-wrapper">
             <table>
-              <thead><tr><th>Date</th><th>Notes</th><th>Status</th></tr></thead>
+              <thead><tr><th>{t('date')}</th><th>{t('notes')}</th><th>{t('status')}</th></tr></thead>
               <tbody>
                 {visits.map((v) => (
                   <tr key={v._id}>
                     <td>{new Date(v.visitDate).toLocaleDateString()}</td>
                     <td>{v.notes || '—'}</td>
-                    <td><span className={`badge badge-${v.status}`}>{v.status}</span></td>
+                    <td><span className={`badge badge-${v.status}`}>{t(v.status)}</span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {!visits.length && <p className="empty-state">No visits yet</p>}
+            {!visits.length && <p className="empty-state">{t('dash.noVisits')}</p>}
           </div>
         </div>
       )}
@@ -81,7 +83,7 @@ const DealerProfilePage = () => {
               <p style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>{m.description || 'No description'}</p>
             </div>
           ))}
-          {!media.length && <p className="empty-state">No approved posts yet</p>}
+          {!media.length && <p className="empty-state">{t('noData')}</p>}
         </div>
       )}
     </div>

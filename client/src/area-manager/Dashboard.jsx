@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Store, MapPin, Clock, CheckCircle, Plus } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import StatCard from '../shared/components/StatCard';
+import { BrandAreaChart } from '../shared/components/ChartKit';
 import { dashboardAPI } from '../services/api';
+import { useLang } from '../shared/context/LanguageContext';
 import '../shared/components/StatCard.css';
 
 const AreaManagerDashboard = () => {
+  const { t } = useLang();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -14,8 +16,8 @@ const AreaManagerDashboard = () => {
     dashboardAPI.getAreaManager().then((res) => setData(res.data.data)).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="loading">Loading dashboard...</div>;
-  if (!data) return <div className="empty-state">Failed to load dashboard</div>;
+  if (loading) return <div className="loading">{t('loading')}</div>;
+  if (!data) return <div className="empty-state">{t('loadFail')}</div>;
 
   const { cards, recentVisits, myDealers, pendingMedia, visitTrend } = data;
 
@@ -23,49 +25,47 @@ const AreaManagerDashboard = () => {
     <div>
       <div className="page-header">
         <div>
-          <h1>Area Manager Dashboard</h1>
-          <p className="page-subtitle">Your dealers, field visits and pending approvals</p>
+          <h1>{t('dash.amTitle')}</h1>
+          <p className="page-subtitle">{t('dash.amSub')}</p>
         </div>
         <Link to="/area-manager/dealers" className="btn btn-primary">
-          <Plus size={16} /> Add Dealer
+          <Plus size={16} /> {t('dash.addDealer')}
         </Link>
       </div>
 
       <div className="stat-grid">
-        <StatCard title="My Dealers" value={cards.assignedDealers} icon={Store} color="primary" />
-        <StatCard title="Inactive Dealers" value={cards.inactiveDealers} icon={Store} color="orange" />
-        <StatCard title="Today's Visits" value={cards.todayVisits} icon={MapPin} color="blue" />
-        <StatCard title="Pending Uploads" value={cards.pendingUploads} icon={Clock} color="orange" />
-        <StatCard title="Completed Visits" value={cards.completedVisits} icon={CheckCircle} color="green" />
+        <StatCard title={t('dash.myDealers')} value={cards.assignedDealers} icon={Store} />
+        <StatCard title={t('dash.inactiveDealers')} value={cards.inactiveDealers} icon={Store} tone="mute" />
+        <StatCard title={t('dash.todayVisits')} value={cards.todayVisits} icon={MapPin} />
+        <StatCard title={t('dash.pendingUploads')} value={cards.pendingUploads} icon={Clock} tone="warn" />
+        <StatCard title={t('dash.completedVisits')} value={cards.completedVisits} icon={CheckCircle} tone="ok" />
       </div>
 
       <div className="dash-grid">
         <div className="card">
-          <h3 className="card-title">Visit Trend (30 days)</h3>
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={(visitTrend || []).map((d) => ({ date: d._id, visits: d.count }))}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" fontSize={11} />
-              <YAxis fontSize={12} />
-              <Tooltip />
-              <Line type="monotone" dataKey="visits" stroke="#2563eb" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
+          <h3 className="card-title">{t('dash.visitTrend')}</h3>
+          <BrandAreaChart
+            data={(visitTrend || []).map((d) => ({
+              date: new Date(d._id).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+              visits: d.count,
+            }))}
+            fillId="amVisitsFill"
+          />
         </div>
 
         <div className="card">
           <div className="card-head">
-            <h3 className="card-title">My Dealers</h3>
-            <Link to="/area-manager/dealers" className="muted">View all</Link>
+            <h3 className="card-title">{t('dash.myDealers')}</h3>
+            <Link to="/area-manager/dealers" className="muted">{t('dash.viewAll')}</Link>
           </div>
           {myDealers?.length ? (
             <div className="table-wrapper">
               <table>
                 <thead>
                   <tr>
-                    <th>Dealer</th>
-                    <th>City</th>
-                    <th>Status</th>
+                    <th>{t('dealers.title')}</th>
+                    <th>{t('dealers.city')}</th>
+                    <th>{t('status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -77,28 +77,28 @@ const AreaManagerDashboard = () => {
                         <small className="muted">{d.dealerCode}</small>
                       </td>
                       <td>{d.city || '—'}</td>
-                      <td><span className={`badge badge-${d.status}`}>{d.status}</span></td>
+                      <td><span className={`badge badge-${d.status}`}>{t(d.status)}</span></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="empty-state">No dealers yet — create your first dealer</p>
+            <p className="empty-state">{t('dash.noDealersYet')}</p>
           )}
         </div>
       </div>
 
       <div className="dash-grid" style={{ marginTop: '1.5rem' }}>
         <div className="card">
-          <h3 className="card-title">Pending Approvals</h3>
+          <h3 className="card-title">{t('dash.pendingList')}</h3>
           {pendingMedia?.length ? (
             <div className="table-wrapper">
               <table>
                 <thead>
                   <tr>
-                    <th>Dealer</th>
-                    <th>When</th>
+                    <th>{t('dealers.title')}</th>
+                    <th>{t('date')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -112,20 +112,20 @@ const AreaManagerDashboard = () => {
               </table>
             </div>
           ) : (
-            <p className="empty-state">Nothing waiting for approval</p>
+            <p className="empty-state">{t('dash.nothingPending')}</p>
           )}
         </div>
 
         <div className="card">
-          <h3 className="card-title">Recent Visits</h3>
+          <h3 className="card-title">{t('dash.recentVisits')}</h3>
           {recentVisits?.length ? (
             <div className="table-wrapper">
               <table>
                 <thead>
                   <tr>
-                    <th>Dealer</th>
-                    <th>Date</th>
-                    <th>Status</th>
+                    <th>{t('dealers.title')}</th>
+                    <th>{t('date')}</th>
+                    <th>{t('status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -133,14 +133,14 @@ const AreaManagerDashboard = () => {
                     <tr key={v._id}>
                       <td>{v.dealer?.dealerName}</td>
                       <td>{new Date(v.visitDate).toLocaleDateString()}</td>
-                      <td><span className={`badge badge-${v.status}`}>{v.status}</span></td>
+                      <td><span className={`badge badge-${v.status}`}>{t(v.status)}</span></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="empty-state">No visits yet</p>
+            <p className="empty-state">{t('dash.noVisits')}</p>
           )}
         </div>
       </div>

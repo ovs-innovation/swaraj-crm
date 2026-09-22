@@ -1,15 +1,16 @@
 import './StatCard.css';
+import { fmtNum } from './ChartKit';
 
-const StatCard = ({ title, value, icon: Icon, color = 'primary' }) => (
-  <div className={`stat-card stat-${color}`}>
-    <div className="stat-info">
-      <span className="stat-title">{title}</span>
-      <span className="stat-value">{value ?? 0}</span>
+const StatCard = ({ title, value, icon: Icon, tone = 'plain' }) => (
+  <div className={`metric metric-${tone}`}>
+    <div>
+      <span className="metric-k">{title}</span>
+      <span className="metric-v">{fmtNum(value)}</span>
     </div>
     {Icon && (
-      <div className="stat-icon">
-        <Icon size={24} />
-      </div>
+      <span className="metric-i">
+        <Icon size={18} strokeWidth={1.75} />
+      </span>
     )}
   </div>
 );
