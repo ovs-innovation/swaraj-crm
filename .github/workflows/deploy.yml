@@ -32,25 +32,17 @@ jobs:
           npm ci || npm install
           npm run build
 
-      # Step 2: Deploy to VPS using Native OpenSSH with Base64 decoded key
+      # Step 2: Deploy to Hostinger VPS using Password
       - name: Deploy to Hostinger VPS
-        env:
-          SSH_KEY: ${{ secrets.SSH_KEY }}
-          HOST: ${{ secrets.HOST }}
-          USERNAME: ${{ secrets.USERNAME }}
-        run: |
-          mkdir -p ~/.ssh
-
-          # Decode the clean original key
-          echo "$SSH_KEY" | tr -d ' \r\n' | base64 -d > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
-          CLEAN_USER=$(echo "${USERNAME:-root}" | tr -d '\r\n[:space:]')
-          CLEAN_HOST=$(echo "${HOST:-72.60.111.212}" | tr -d '\r\n[:space:]')
-
-          echo "Connecting to $CLEAN_USER@$CLEAN_HOST..."
-
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key "$CLEAN_USER@$CLEAN_HOST" "bash -s" << 'EOF'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          script_stop: true
+          timeout: 60s
+          command_timeout: 10m
+          script: |
             set -e
 
             echo "=== Step 1: Navigating to project directory ==="
@@ -80,4 +72,3 @@ jobs:
             fi
 
             echo "=== DEPLOYMENT COMPLETED SUCCESSFULLY ==="
-          EOF
