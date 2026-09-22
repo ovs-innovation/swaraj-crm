@@ -40,10 +40,12 @@ jobs:
           USERNAME: ${{ secrets.USERNAME }}
         run: |
           mkdir -p ~/.ssh
-          printf "%s\n" "$SSH_KEY" > ~/.ssh/deploy_key
+
+          # Automatically strip leading spaces, trailing spaces, and Windows carriage returns
+          echo "$SSH_KEY" | sed -e 's/^[[:blank:]]*//' -e 's/[[:blank:]]*$//' | tr -d '\r' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-          # Clean any trailing spaces/newlines from secrets
+          # Clean variables
           CLEAN_USER=$(echo "${USERNAME:-root}" | tr -d '\r\n[:space:]')
           CLEAN_HOST=$(echo "${HOST:-72.60.111.212}" | tr -d '\r\n[:space:]')
 
