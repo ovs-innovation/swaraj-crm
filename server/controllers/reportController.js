@@ -5,6 +5,7 @@ import Visit from '../models/Visit.js';
 import Media from '../models/Media.js';
 import AreaManager from '../models/AreaManager.js';
 import { asyncHandler } from '../utils/helpers.js';
+import { isCloudinaryReady, uploadLocalFile } from '../utils/cloudinary.js';
 
 export const getAuditLogs = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, action, entity } = req.query;
@@ -44,11 +45,20 @@ export const uploadLetterhead = asyncHandler(async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No picture uploaded' });
   }
+  let imageUrl = `/uploads/${req.file.filename}`;
+  if (isCloudinaryReady()) {
+    try {
+      const up = await uploadLocalFile(req.file.path, { folder: 'swaraj-crm/letterhead' });
+      if (up?.url) imageUrl = up.url;
+    } catch (e) {
+      console.error('Cloudinary letterhead upload failed:', e.message);
+    }
+  }
   let settings = await Settings.findOne();
   if (!settings) settings = await Settings.create({});
   const letterhead = {
     ...(settings.letterhead?.toObject?.() || settings.letterhead || {}),
-    imageUrl: `/uploads/${req.file.filename}`,
+    imageUrl,
   };
   settings.letterhead = letterhead;
   await settings.save();

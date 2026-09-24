@@ -285,6 +285,8 @@
 .lh-exporting .lh-band.on {
   outline: none;
 }
+
+@media (max-width: 900px) {
   .lh-grid {
     grid-template-columns: 1fr;
   }
