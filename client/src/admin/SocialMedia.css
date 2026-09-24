@@ -1,0 +1,116 @@
+.social-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.social-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 1rem;
+}
+
+.social-grid h3,
+.social-page .card h3 {
+  margin: 0 0 0.9rem;
+  font-size: 1rem;
+}
+
+.social-platforms {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.social-platforms label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.social-platforms label.on {
+  border-color: #0078D4;
+  background: #e8f4fc;
+  color: #005A9E;
+}
+
+.social-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.social-preview-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.45rem;
+  margin-bottom: 0.75rem;
+}
+
+.social-preview-photos img,
+.social-thumbs img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+.social-thumbs {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.social-thumbs img {
+  width: 44px;
+  height: 44px;
+}
+
+.social-preview-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 1.5rem 0;
+}
+
+.social-preview-meta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0078D4;
+  margin-bottom: 0.4rem;
+}
+
+.social-preview pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.social-cap {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-err {
+  max-width: 240px;
+  color: #9b1c1c;
+  font-size: 0.78rem;
+}
+
+.badge-published { background: #ecfccb; color: #3f6212; }
+.badge-failed { background: #fee2e2; color: #9b1c1c; }
+.badge-publishing { background: #dbeafe; color: #1d4ed8; }
+.badge-scheduled { background: #fef3c7; color: #92400e; }
+
+@media (max-width: 900px) {
+  .social-grid { grid-template-columns: 1fr; }
+}

@@ -1,4 +1,5 @@
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import { portalLoginPath } from '../../portal';
 import {
   LayoutDashboard,
   Users,
@@ -18,12 +19,15 @@ import {
   Frame,
   Images,
   BookOpen,
+  Share2,
+  Clapperboard,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LanguageContext';
 import BrandLogo from './BrandLogo';
 import LangSwitch from './LangSwitch';
+import NotificationBell from './NotificationBell';
 import './Layout.css';
 
 const Layout = () => {
@@ -47,6 +51,12 @@ const Layout = () => {
   const superAdminLinks = [
     { to: '/super-admin', icon: LayoutDashboard, label: t('nav.dashboard') },
     { to: '/super-admin/letterhead', icon: Frame, label: t('nav.letterhead') },
+    { to: '/super-admin/social', icon: Share2, label: t('nav.social') },
+    { to: '/super-admin/videos', icon: Clapperboard, label: t('nav.videos') },
+    { to: '/super-admin/queue', icon: Clapperboard, label: t('nav.queue') },
+    { to: '/super-admin/library', icon: Images, label: t('nav.library') },
+    { to: '/super-admin/templates', icon: Frame, label: t('nav.templates') },
+    { to: '/super-admin/health', icon: Shield, label: t('nav.health') },
     { to: '/super-admin/posters', icon: Images, label: t('nav.posters') },
     { to: '/admin/users', icon: Crown, label: t('nav.hqUsers') },
     ...adminLinks.slice(1).filter((l) => l.to !== '/admin/posters'),
@@ -58,6 +68,7 @@ const Layout = () => {
     { to: '/area-manager/visits', icon: MapPin, label: t('nav.visits') },
     { to: '/area-manager/media', icon: Image, label: t('nav.approve') },
     { to: '/area-manager/sheet', icon: FileText, label: t('nav.sendSheet') },
+    { to: '/area-manager/videos', icon: Clapperboard, label: t('nav.videos') },
     { to: '/area-manager/reports', icon: ClipboardList, label: t('nav.reports') },
   ];
 
@@ -65,6 +76,7 @@ const Layout = () => {
     { to: '/dealer', icon: LayoutDashboard, label: t('nav.dashboard') },
     { to: '/dealer/profile', icon: User, label: t('nav.profile') },
     { to: '/dealer/upload', icon: Upload, label: t('nav.upload') },
+    { to: '/dealer/videos', icon: Clapperboard, label: t('nav.videos') },
     { to: '/dealer/posts', icon: Image, label: t('nav.posts') },
     { to: '/dealer/visits', icon: MapPin, label: t('nav.visitHistory') },
   ];
@@ -80,7 +92,7 @@ const Layout = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate(portalLoginPath(user?.role));
   };
 
   return (
@@ -96,6 +108,7 @@ const Layout = () => {
             {t('nav.guide')}
           </a>
           <LangSwitch light />
+          <NotificationBell />
           <span className="topbar-role">{t(`roles.${user?.role}`)}</span>
           <div className="header-user">
             <span>{user?.name}</span>

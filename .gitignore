@@ -5,5 +5,6 @@ build/
 *.log
 .DS_Store
 server/uploads/*
+server/backups/*
 !server/uploads/.gitkeep
 .vite/

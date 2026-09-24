@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { authAPI, AUTH_TOKEN_KEY, AUTH_USER_KEY, clearAuthStorage } from '../../services/api';
+import { getPortalRole, portalLoginPath } from '../../portal';
 
 const AuthContext = createContext(null);
 
@@ -8,7 +9,7 @@ export const getHomePath = (role) => {
   if (role === 'admin') return '/admin';
   if (role === 'area_manager') return '/area-manager';
   if (role === 'dealer') return '/dealer';
-  return '/login';
+  return portalLoginPath('');
 };
 
 const normalizeUser = (raw) => {
@@ -42,7 +43,8 @@ export const AuthProvider = ({ children }) => {
       .getMe()
       .then((res) => {
         const next = normalizeUser(res.data.user);
-        if (!next) {
+        const portal = getPortalRole();
+        if (!next || (portal && next.role !== portal)) {
           clearAuthStorage();
           setUser(null);
           return;
@@ -55,7 +57,8 @@ export const AuthProvider = ({ children }) => {
         try {
           const saved = localStorage.getItem(AUTH_USER_KEY);
           const fallback = saved ? normalizeUser(JSON.parse(saved)) : null;
-          if (fallback) {
+          const portal = getPortalRole();
+          if (fallback && (!portal || fallback.role === portal)) {
             setUser(fallback);
             return;
           }
@@ -72,6 +75,11 @@ export const AuthProvider = ({ children }) => {
     const res = await authAPI.login({ email, password, role });
     const next = normalizeUser(res.data.user);
     if (!next) throw new Error('Invalid login response');
+    const portal = getPortalRole();
+    if (portal && next.role !== portal) {
+      clearAuthStorage();
+      throw new Error('Wrong portal for this account');
+    }
     localStorage.setItem(AUTH_TOKEN_KEY, res.data.token);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(next));
     setUser(next);

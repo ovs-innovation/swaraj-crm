@@ -4,7 +4,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npm run dev:all",
+    "dev:all": "concurrently -n SA,AD,AM,DL -c blue,magenta,green,yellow \"npm run dev:super\" \"npm run dev:admin\" \"npm run dev:am\" \"npm run dev:dealer\"",
+    "dev:super": "vite --mode super --port 5173 --strictPort",
+    "dev:admin": "vite --mode admin --port 5174 --strictPort",
+    "dev:am": "vite --mode am --port 5175 --strictPort",
+    "dev:dealer": "vite --mode dealer --port 5176 --strictPort",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -20,6 +25,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.2.4",
     "vite": "^6.0.6"
   }
 }

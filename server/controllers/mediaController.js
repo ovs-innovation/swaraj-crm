@@ -4,6 +4,7 @@ import { asyncHandler, paginate, paginationMeta } from '../utils/helpers.js';
 import { logAudit } from '../middleware/auditLog.js';
 import { logActivity } from '../utils/activityLogger.js';
 import { getFileType } from '../middleware/upload.js';
+import { attachCloudUrl } from '../utils/cloudinary.js';
 
 const getAssignedDealerIds = async (areaManagerRef) => {
   const dealers = await Dealer.find({ areaManager: areaManagerRef }).select('_id').lean();
@@ -70,11 +71,13 @@ export const uploadMedia = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Dealer not found' });
   }
 
+  const stored = await attachCloudUrl(req.file, 'swaraj-crm/media');
   const media = await Media.create({
     dealer: dealerId,
     uploadedBy: req.user._id,
     type: getFileType(req.file.mimetype),
-    url: `/uploads/${req.file.filename}`,
+    url: stored.url,
+    publicId: stored.publicId,
     description,
     location,
     visit: visit || undefined,

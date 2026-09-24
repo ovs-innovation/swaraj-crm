@@ -15,7 +15,16 @@ import mediaRoutes from './routes/mediaRoutes.js';
 import posterRoutes from './routes/posterRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import { reportRoutes, settingsRouter } from './routes/reportRoutes.js';
+import socialRoutes from './routes/socialRoutes.js';
+import videoRoutes from './routes/videoRoutes.js';
+import studioRoutes from './routes/studioRoutes.js';
 import { ensureDemoUsers } from './utils/ensureDemoUsers.js';
+import { startSocialScheduler } from './utils/socialScheduler.js';
+import { startVideoQueue } from './utils/videoQueue.js';
+import { apiLimiter } from './middleware/rateLimits.js';
+import { startDailyBackup } from './utils/backupJob.js';
+import { startServerAlerts } from './utils/serverAlerts.js';
+import { initSentry } from './utils/sentry.js';
 
 dotenv.config();
 
@@ -23,12 +32,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+await initSentry(app);
 
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
+const clientOrigins = [
+  ...(process.env.CLIENT_URLS || process.env.CLIENT_URL || '').split(','),
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+].map((s) => s.trim()).filter(Boolean);
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || clientOrigins.includes(origin)) return cb(null, true);
+    return cb(null, false);
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: '7d' }));
 
+app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/area-managers', areaManagerRoutes);
@@ -39,6 +64,9 @@ app.use('/api/posters', posterRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRouter);
+app.use('/api/social', socialRoutes);
+app.use('/api/videos', videoRoutes);
+app.use('/api/studio', studioRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ success: true, message: 'Swaraj CRM API is running' });
@@ -80,6 +108,10 @@ mongoose
     } catch (err) {
       console.error('Demo user setup failed:', err.message);
     }
+    startSocialScheduler();
+    startVideoQueue();
+    startDailyBackup();
+    startServerAlerts();
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((err) => {

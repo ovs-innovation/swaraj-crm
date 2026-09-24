@@ -5,9 +5,13 @@
   "private": true,
   "scripts": {
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev": "concurrently -n API,SA,AD,AM,DL \"npm run dev:server\" \"npm run dev:super\" \"npm run dev:admin\" \"npm run dev:am\" \"npm run dev:dealer\"",
     "dev:server": "cd server && npm run dev",
-    "dev:client": "cd client && npm run dev",
+    "dev:client": "cd client && npm run dev:all",
+    "dev:super": "cd client && npm run dev:super",
+    "dev:admin": "cd client && npm run dev:admin",
+    "dev:am": "cd client && npm run dev:am",
+    "dev:dealer": "cd client && npm run dev:dealer",
     "build": "cd client && npm run build",
     "start": "cd server && npm start"
   },

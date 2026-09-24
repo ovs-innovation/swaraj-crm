@@ -123,6 +123,43 @@ export const postersAPI = {
   delete: (id) => api.delete(`/posters/${id}`),
 };
 
+export const videoAPI = {
+  list: (params) => api.get('/videos', { params }),
+  get: (id) => api.get(`/videos/${id}`),
+  upload: (formData) => api.post('/videos', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  save: (id, formData) => api.patch(`/videos/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  render: (id) => api.post(`/videos/${id}/render`),
+  sendAm: (id) => api.post(`/videos/${id}/send-am`),
+  review: (id, data) => api.post(`/videos/${id}/review`, data),
+  publish: (id, data) => api.post(`/videos/${id}/publish`, data),
+  retry: (id, data) => api.post(`/videos/${id}/retry`, data),
+  trail: (id) => api.get(`/videos/${id}/trail`),
+  restore: (id, index) => api.post(`/studio/videos/${id}/restore/${index}`),
+  comment: (id, data) => api.post(`/studio/videos/${id}/comments`, data),
+  analytics: (id) => api.get(`/studio/videos/${id}/analytics`),
+  applyTemplate: (id, templateId) => api.post(`/studio/videos/${id}/template`, { templateId }),
+};
+
+export const studioAPI = {
+  queue: () => api.get('/studio/queue'),
+  library: (params) => api.get('/studio/library', { params }),
+  addAsset: (formData) => api.post('/studio/library', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  deleteAsset: (id) => api.delete(`/studio/library/${id}`),
+  templates: () => api.get('/studio/templates'),
+  saveTemplate: (data) => api.post('/studio/templates', data),
+  deleteTemplate: (id) => api.delete(`/studio/templates/${id}`),
+  notifications: () => api.get('/studio/notifications'),
+  readNotifications: (ids) => api.post('/studio/notifications/read', { ids }),
+  ai: (data) => api.post('/studio/ai', data),
+  health: () => api.get('/studio/health'),
+};
+
+export const socialAPI = {
+  config: () => api.get('/social/config'),
+  list: (params) => api.get('/social', { params }),
+  publish: (formData) => api.post('/social', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+};
+
 export const settingsAPI = {
   get: () => api.get('/settings'),
   update: (data) => api.put('/settings', data),

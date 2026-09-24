@@ -1,59 +1,44 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Crown, Shield, Store, Users } from 'lucide-react';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Crown, Shield, Store, Users } from 'lucide-react';
 import { useAuth } from '../shared/context/AuthContext';
 import { useLang } from '../shared/context/LanguageContext';
 import BrandLogo from '../shared/components/BrandLogo';
 import LangSwitch from '../shared/components/LangSwitch';
+import { getPortalRole, PORTAL_HINT, PORTAL_PATHS } from '../portal';
 import './Login.css';
 
-const HQ_ROLES = new Set(['super_admin', 'admin']);
+const ICONS = {
+  super_admin: Crown,
+  admin: Shield,
+  area_manager: Users,
+  dealer: Store,
+};
 
 const Login = () => {
   const [error, setError] = useState('');
-  const [loadingRole, setLoadingRole] = useState('');
-  const [pickedRole, setPickedRole] = useState(null);
+  const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login, getHomePath, user, loading: authLoading } = useAuth();
   const { t } = useLang();
   const navigate = useNavigate();
+  const roleId = getPortalRole();
+  const Icon = ICONS[roleId] || Store;
 
-  const roles = [
-    { id: 'super_admin', icon: Crown, email: 'superadmin@vastora.com', password: 'super123' },
-    { id: 'admin', icon: Shield, email: 'admin@vastora.com', password: 'admin123' },
-    { id: 'area_manager', icon: Users, email: 'rajesh@vastora.com', password: 'manager123' },
-    { id: 'dealer', icon: Store, email: 'amit@vastora.com', password: 'dealer123' },
-  ];
-
-  const enterWithCreds = async (roleId, mail, pass) => {
-    if (loadingRole) return;
+  const enterWithCreds = async (e) => {
+    e.preventDefault();
+    if (busy || !roleId) return;
     setError('');
-    setLoadingRole(roleId);
+    setBusy(true);
     try {
-      const loggedIn = await login(mail.trim(), pass, roleId);
+      const loggedIn = await login(email.trim(), password, roleId);
       navigate(getHomePath(loggedIn.role), { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || t('signInFail'));
-      setLoadingRole('');
+      setError(err.response?.data?.message || err.message || t('signInFail'));
+    } finally {
+      setBusy(false);
     }
-  };
-
-  const pickRole = (picked) => {
-    setError('');
-    if (HQ_ROLES.has(picked.id)) {
-      enterWithCreds(picked.id, picked.email, picked.password);
-      return;
-    }
-    setPickedRole(picked);
-    setEmail('');
-    setPassword('');
-  };
-
-  const submitFieldLogin = (e) => {
-    e.preventDefault();
-    if (!pickedRole) return;
-    enterWithCreds(pickedRole.id, email, password);
   };
 
   if (authLoading) return <div className="loading">{t('loading')}</div>;
@@ -66,52 +51,36 @@ const Login = () => {
           <BrandLogo size={52} light />
           <h2>{t('mera')}</h2>
           <p>{t('loginTag')}</p>
+          {roleId && <p className="login-port">{t(`roles.${roleId}`)}</p>}
         </aside>
         <div className="login-card">
           <div className="login-card-top">
             <BrandLogo size={44} />
             <LangSwitch />
           </div>
-          {!pickedRole ? (
+          {!roleId ? (
             <>
               <p className="login-choose">{t('chooseAccess')}</p>
-              <p className="login-many">{t('loginMany')}</p>
-              <p style={{ margin: '-0.35rem 0 1rem' }}>
-                <a href="/Swaraj-CRM-User-Guide.html" target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', fontWeight: 650, color: '#0078D4' }}>
-                  {t('nav.guide')}
-                </a>
-              </p>
-              {error && <div className="alert alert-error">{error}</div>}
+              <p className="login-many">{t('loginPortalOnly')}</p>
               <div className="role-grid">
-                {roles.map((picked) => {
-                  const Icon = picked.icon;
-                  const busy = loadingRole === picked.id;
+                {Object.keys(PORTAL_PATHS).map((id) => {
+                  const Chip = ICONS[id];
                   return (
-                    <button
-                      key={picked.id}
-                      type="button"
-                      className={`role-chip ${busy ? 'active' : ''}`}
-                      disabled={!!loadingRole}
-                      onClick={() => pickRole(picked)}
-                    >
-                      <Icon size={18} />
-                      <strong>{t(`roles.${picked.id}`)}</strong>
-                    </button>
+                    <Link key={id} to={PORTAL_PATHS[id]} className="role-chip">
+                      <Chip size={18} />
+                      <strong>{t(`roles.${id}`)}</strong>
+                    </Link>
                   );
                 })}
               </div>
             </>
           ) : (
-            <form className="login-fields" onSubmit={submitFieldLogin}>
-              <button
-                type="button"
-                className="login-back"
-                onClick={() => { setPickedRole(null); setError(''); setLoadingRole(''); }}
-              >
-                <ArrowLeft size={16} /> {t('loginBack')}
-              </button>
-              <p className="login-choose">{t(`roles.${pickedRole.id}`)}</p>
-              <p className="login-many">{t('loginOwnAccount')}</p>
+            <form className="login-fields" onSubmit={enterWithCreds}>
+              <p className="login-choose">
+                <Icon size={18} /> {t(`roles.${roleId}`)}
+              </p>
+              <p className="login-many">{t('loginPortalOnly')}</p>
+              <p className="login-many">{PORTAL_HINT[roleId]}</p>
               {error && <div className="alert alert-error">{error}</div>}
               <div className="form-group">
                 <label>{t('email')}</label>
@@ -121,8 +90,8 @@ const Login = () => {
                 <label>{t('loginPassword')}</label>
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
               </div>
-              <button className="btn btn-primary" type="submit" disabled={!!loadingRole} style={{ width: '100%', justifyContent: 'center' }}>
-                {loadingRole ? t('loading') : t('signIn')}
+              <button className="btn btn-primary" type="submit" disabled={busy} style={{ width: '100%', justifyContent: 'center' }}>
+                {busy ? t('loading') : t('signIn')}
               </button>
             </form>
           )}

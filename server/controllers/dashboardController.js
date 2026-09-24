@@ -4,6 +4,7 @@ import Visit from '../models/Visit.js';
 import Media from '../models/Media.js';
 import Activity from '../models/Activity.js';
 import User from '../models/User.js';
+import VideoJob from '../models/VideoJob.js';
 import mongoose from 'mongoose';
 import { asyncHandler } from '../utils/helpers.js';
 
@@ -38,6 +39,12 @@ export const getSuperAdminDashboard = asyncHandler(async (req, res) => {
     dealersByManager,
     recentActivities,
     recentHqUsers,
+    pendingVideos,
+    renderingVideos,
+    waitingAmVideos,
+    scheduledVideos,
+    publishedToday,
+    failedVideos,
   ] = await Promise.all([
     User.countDocuments({ role: 'super_admin' }),
     User.countDocuments({ role: 'admin' }),
@@ -66,6 +73,12 @@ export const getSuperAdminDashboard = asyncHandler(async (req, res) => {
       .select('name email role status createdAt')
       .sort({ createdAt: -1 })
       .limit(6),
+    VideoJob.countDocuments({ status: 'pending_review' }),
+    VideoJob.countDocuments({ status: { $in: ['queued', 'rendering'] } }),
+    VideoJob.countDocuments({ status: 'waiting_am' }),
+    VideoJob.countDocuments({ status: 'scheduled' }),
+    VideoJob.countDocuments({ status: 'published', publishedAt: { $gte: today } }),
+    VideoJob.countDocuments({ status: 'failed' }),
   ]);
 
   res.json({
@@ -81,6 +94,12 @@ export const getSuperAdminDashboard = asyncHandler(async (req, res) => {
         pendingApprovals,
         todayVisits,
         monthlyVisits,
+        pendingVideos,
+        renderingVideos,
+        waitingAmVideos,
+        scheduledVideos,
+        publishedToday,
+        failedVideos,
       },
       charts: { dealersByState, dealersByManager },
       recentActivities,

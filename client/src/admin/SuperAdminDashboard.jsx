@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Crown, Users, Store, ShieldOff, Clock, MapPin, Shield } from 'lucide-react';
+import { Crown, Users, Store, ShieldOff, Clock, MapPin, Shield, Clapperboard, AlertTriangle, CalendarClock } from 'lucide-react';
 import StatCard from '../shared/components/StatCard';
 import { BrandBarChart } from '../shared/components/ChartKit';
 import { dashboardAPI } from '../services/api';
@@ -42,6 +42,12 @@ const SuperAdminDashboard = () => {
         <StatCard title={t('dash.inactiveDealers')} value={cards.inactiveDealers} icon={ShieldOff} tone="mute" />
         <StatCard title={t('dash.pendingApprovals')} value={cards.pendingApprovals} icon={Clock} tone="warn" />
         <StatCard title={t('dash.todayVisits')} value={cards.todayVisits} icon={MapPin} />
+        <StatCard title={t('dash.pendingVideos')} value={cards.pendingVideos || 0} icon={Clapperboard} tone="warn" />
+        <StatCard title={t('dash.renderingVideos')} value={cards.renderingVideos || 0} icon={Clapperboard} />
+        <StatCard title={t('dash.waitingAm')} value={cards.waitingAmVideos || 0} icon={Clock} tone="warn" />
+        <StatCard title={t('dash.scheduledVideos')} value={cards.scheduledVideos || 0} icon={CalendarClock} />
+        <StatCard title={t('dash.publishedToday')} value={cards.publishedToday || 0} icon={Clapperboard} />
+        <StatCard title={t('dash.failedVideos')} value={cards.failedVideos || 0} icon={AlertTriangle} tone="mute" />
       </div>
 
       <div className="dash-grid">

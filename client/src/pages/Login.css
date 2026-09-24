@@ -61,6 +61,15 @@
   font-weight: 650;
   color: #111827;
   margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.login-port {
+  margin-top: 1rem;
+  font-weight: 700;
+  opacity: 0.95;
 }
 
 .login-brand {
@@ -85,6 +94,8 @@
   display: flex;
   align-items: center;
   gap: 0.55rem;
+  text-decoration: none;
+  color: inherit;
   text-align: left;
   padding: 0.95rem 0.85rem;
   border: 1px solid #e5e7eb;

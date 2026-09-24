@@ -3,6 +3,7 @@ import { useAuth } from './shared/context/AuthContext';
 import ProtectedRoute from './shared/components/ProtectedRoute';
 import Layout from './shared/components/Layout';
 import Login from './pages/Login';
+import { getPortalRole, portalLoginPath } from './portal';
 
 import SuperAdminDashboard from './admin/SuperAdminDashboard';
 import AdminDashboard from './admin/Dashboard';
@@ -11,6 +12,7 @@ import AuditLogs from './admin/AuditLogs';
 import Settings from './admin/Settings';
 import Users from './admin/Users';
 import LetterheadEditor from './admin/LetterheadEditor';
+import SocialMedia from './admin/SocialMedia';
 import BulkPosters from './shared/pages/BulkPosters';
 import AmSheetUpload from './area-manager/SheetUpload';
 
@@ -26,23 +28,38 @@ import DealerProfile from './shared/pages/DealerProfile';
 import Visits from './shared/pages/Visits';
 import MediaPage from './shared/pages/Media';
 import Reports from './shared/pages/Reports';
+import VideoDesk from './shared/pages/VideoDesk';
+import RenderQueue from './admin/RenderQueue';
+import MediaLibrary from './admin/MediaLibrary';
+import BrandTemplates from './admin/BrandTemplates';
+import HealthMonitor from './admin/HealthMonitor';
 
 const HomeRedirect = () => {
   const { user, loading, getHomePath } = useAuth();
   if (loading) return <div className="loading">Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to={portalLoginPath(getPortalRole())} replace />;
   return <Navigate to={getHomePath(user.role)} replace />;
 };
 
 const App = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
+    <Route path="/login/super-admin" element={<Login />} />
+    <Route path="/login/admin" element={<Login />} />
+    <Route path="/login/area-manager" element={<Login />} />
+    <Route path="/login/dealer" element={<Login />} />
     <Route path="/" element={<HomeRedirect />} />
 
     <Route element={<ProtectedRoute roles={['super_admin']} />}>
       <Route element={<Layout />}>
         <Route path="/super-admin" element={<SuperAdminDashboard />} />
         <Route path="/super-admin/letterhead" element={<LetterheadEditor />} />
+        <Route path="/super-admin/social" element={<SocialMedia />} />
+        <Route path="/super-admin/videos" element={<VideoDesk mode="super" />} />
+        <Route path="/super-admin/queue" element={<RenderQueue />} />
+        <Route path="/super-admin/library" element={<MediaLibrary />} />
+        <Route path="/super-admin/templates" element={<BrandTemplates />} />
+        <Route path="/super-admin/health" element={<HealthMonitor />} />
         <Route path="/super-admin/posters" element={<BulkPosters />} />
       </Route>
     </Route>
@@ -71,6 +88,7 @@ const App = () => (
         <Route path="/area-manager/visits" element={<Visits />} />
         <Route path="/area-manager/media" element={<MediaPage approvalMode />} />
         <Route path="/area-manager/sheet" element={<AmSheetUpload />} />
+        <Route path="/area-manager/videos" element={<VideoDesk mode="am" />} />
         <Route path="/area-manager/reports" element={<Reports />} />
       </Route>
     </Route>
@@ -80,6 +98,7 @@ const App = () => (
         <Route path="/dealer" element={<DealerDashboard />} />
         <Route path="/dealer/profile" element={<DealerProfilePage />} />
         <Route path="/dealer/upload" element={<DealerUpload />} />
+        <Route path="/dealer/videos" element={<VideoDesk mode="dealer" />} />
         <Route path="/dealer/posts" element={<DealerMedia />} />
         <Route path="/dealer/visits" element={<DealerVisits />} />
       </Route>
