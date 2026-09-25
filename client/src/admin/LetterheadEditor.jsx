@@ -79,6 +79,7 @@ const LetterheadEditor = () => {
   const canvasRef = useRef(null);
   const [draft, setDraft] = useState(empty);
   const [localPreview, setLocalPreview] = useState("");
+  const [imgError, setImgError] = useState(false);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [focus, setFocus] = useState("headerText");
@@ -89,6 +90,11 @@ const LetterheadEditor = () => {
   }, []);
 
   const pictureSrc = localPreview || mediaUrl(draft.imageUrl);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [pictureSrc]);
+
   const active = draft.texts?.[focus] || defaultTexts.headerText;
 
   const patchText = (key, patch) => {
@@ -105,6 +111,7 @@ const LetterheadEditor = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     setLocalPreview(URL.createObjectURL(file));
+    setImgError(false);
     setBusy(true);
     try {
       const fd = new FormData();
@@ -288,8 +295,12 @@ const LetterheadEditor = () => {
           <h1>{t("lh.title")}</h1>
           <p className="page-subtitle">{t("lh.sub")}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <button className="btn btn-outline" type="button" disabled={busy || !pictureSrc} onClick={downloadHd}>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <label className="btn btn-outline" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", margin: 0 }}>
+            <input type="file" accept="image/*" onChange={onPick} hidden />
+            {pictureSrc && !imgError ? (t("lh.replace") || "Change picture") : (t("lh.drop") || "Choose picture")}
+          </label>
+          <button className="btn btn-outline" type="button" disabled={busy || !pictureSrc || imgError} onClick={downloadHd}>
             {t("lh.download")}
           </button>
           <button className="btn btn-primary" type="button" disabled={busy} onClick={saveTexts}>
@@ -364,15 +375,15 @@ const LetterheadEditor = () => {
 
       <div className="lh-grid">
         <div className="lh-stage card">
-          {!pictureSrc ? (
+          {(!pictureSrc || imgError) ? (
             <label className="lh-drop">
               <input type="file" accept="image/*" onChange={onPick} hidden />
-              <strong>{t("lh.drop")}</strong>
+              <strong>{imgError ? (t("lh.drop") || "Choose picture (file missing on server)") : t("lh.drop")}</strong>
               <span>{t("lh.dropHint")}</span>
             </label>
           ) : (
             <div className="lh-canvas" ref={canvasRef}>
-              <img src={pictureSrc} alt="" />
+              <img src={pictureSrc} alt="" onError={() => setImgError(true)} />
               <div className={`lh-band header ${bandKey === "header" ? "on" : ""}`} style={{ height: `${draft.headerPct}%`, background: draft.headerBg }}>
                 <button type="button" className="lh-handle bottom" onMouseDown={startResizeBand("header")} />
               </div>

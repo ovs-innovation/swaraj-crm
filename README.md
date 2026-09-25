@@ -47,16 +47,7 @@ cd server && npm run seed
 cd .. && npm run dev
 ```
 
-- **Frontend:** http://localhost:5173
-- **Backend API:** http://localhost:5000/api
 
-## Demo Credentials
-
-| Role          | Email               | Password    |
-|---------------|---------------------|-------------|
-| Admin         | admin@vastora.com    | admin123    |
-| Area Manager  | rajesh@vastora.com   | manager123  |
-| Area Manager  | suresh@vastora.com   | manager123  |
 
 ## Project Structure
 
