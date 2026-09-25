@@ -53,18 +53,33 @@ export const getSheet = asyncHandler(async (req, res) => {
   if (req.user.role === 'area_manager' && String(job.areaManager?._id || job.areaManager) !== String(req.user.areaManagerRef)) {
     return res.status(403).json({ success: false, message: 'Not allowed' });
   }
-  try {
-    const filePath = path.join(__dirname, '..', String(job.fileUrl || '').replace(/^\//, ''));
-    if (job.fileUrl && fs.existsSync(filePath)) {
-      const parsed = await parseDealerSheet(filePath, job.fileName);
-      job.headers = parsed.headers;
-      job.rows = parsed.rows;
-      job.mapping = parsed.mapping;
-      await job.save();
+  if (!job.rowsEdited) {
+    try {
+      const filePath = path.join(__dirname, '..', String(job.fileUrl || '').replace(/^\//, ''));
+      if (job.fileUrl && fs.existsSync(filePath)) {
+        const parsed = await parseDealerSheet(filePath, job.fileName);
+        job.headers = parsed.headers;
+        job.rows = parsed.rows;
+        if (!job.mapping || !job.mapping.headerText) job.mapping = parsed.mapping;
+        await job.save();
+      }
+    } catch {
+      /* keep stored rows */
     }
-  } catch {
-    /* keep stored rows if file cannot be re-read */
   }
+  res.json({ success: true, data: job });
+});
+
+export const updateSheet = asyncHandler(async (req, res) => {
+  if (req.user.role === 'area_manager') {
+    return res.status(403).json({ success: false, message: 'Only Super Admin can edit the Excel data' });
+  }
+  const job = await SheetJob.findById(req.params.id);
+  if (!job) return res.status(404).json({ success: false, message: 'Sheet not found' });
+  if (Array.isArray(req.body.rows)) job.rows = req.body.rows;
+  if (req.body.mapping) job.mapping = req.body.mapping;
+  job.rowsEdited = true;
+  await job.save();
   res.json({ success: true, data: job });
 });
 

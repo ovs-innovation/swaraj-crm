@@ -27,7 +27,7 @@ router.get('/area-wise', authorize('admin'), getAreaWiseReport);
 const settingsRouter = Router();
 settingsRouter.use(protect);
 settingsRouter.get('/', getSettings);
-settingsRouter.put('/', authorize('admin'), updateSettings);
+settingsRouter.put('/', authorize('super_admin', 'admin'), updateSettings);
 settingsRouter.post('/letterhead', authorize('super_admin'), upload.single('file'), uploadLetterhead);
 
 export { router as reportRoutes, settingsRouter };

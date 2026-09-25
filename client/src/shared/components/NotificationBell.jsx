@@ -10,6 +10,8 @@ const NotificationBell = () => {
   const [unread, setUnread] = useState(0);
 
   const load = () => {
+    const token = localStorage.getItem('vastora_crm_token') || localStorage.getItem('token');
+    if (!token) return;
     studioAPI.notifications().then((res) => {
       setRows(res.data.data || []);
       setUnread(res.data.unread || 0);
@@ -18,7 +20,7 @@ const NotificationBell = () => {
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 20000);
+    const t = setInterval(load, 60000);
     return () => clearInterval(t);
   }, []);
 

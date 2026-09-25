@@ -8,6 +8,7 @@ const sheetJobSchema = new mongoose.Schema(
     headers: { type: [String], default: [] },
     rows: { type: [mongoose.Schema.Types.Mixed], default: [] },
     mapping: { type: mongoose.Schema.Types.Mixed, default: {} },
+    rowsEdited: { type: Boolean, default: false },
     status: { type: String, enum: ['pending', 'generated', 'sent_am', 'done'], default: 'pending' },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   },

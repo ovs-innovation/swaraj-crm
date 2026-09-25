@@ -48,9 +48,7 @@ const Login = () => {
     <div className="login-page">
       <div className="login-shell">
         <aside className="login-panel">
-          <BrandLogo size={52} light />
-          <h2>{t('mera')}</h2>
-          <p>{t('loginTag')}</p>
+          <BrandLogo size={64} light />
           {roleId && <p className="login-port">{t(`roles.${roleId}`)}</p>}
         </aside>
         <div className="login-card">

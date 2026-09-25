@@ -26,7 +26,7 @@ api.interceptors.response.use(
   (err) => {
     const status = err.response?.status;
     const url = err.config?.url || '';
-    const skipRedirect = url.includes('/auth/login') || url.includes('/auth/me');
+    const skipRedirect = url.includes('/auth/login') || url.includes('/auth/me') || url.includes('/studio/notifications');
 
     if (status === 401 && !skipRedirect) {
       clearAuthStorage();
@@ -114,6 +114,7 @@ export const postersAPI = {
   sendSheet: (formData) => api.post('/posters/sheets', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   sheets: () => api.get('/posters/sheets'),
   sheet: (id) => api.get(`/posters/sheets/${id}`),
+  saveSheet: (id, data) => api.patch(`/posters/sheets/${id}`, data),
   sendToAm: (sheetId) => api.post(`/posters/sheets/${sheetId}/send`),
   save: (formData) => api.post('/posters/save', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getAll: (params) => api.get('/posters', { params }),

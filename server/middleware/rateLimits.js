@@ -4,9 +4,13 @@ import Media from '../models/Media.js';
 
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: Number(process.env.API_RATE_MAX || 300),
+  max: Number(process.env.API_RATE_MAX || 2000),
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    const p = req.path || '';
+    return p === '/health' || p.endsWith('/studio/notifications') || p === '/notifications';
+  },
   message: { success: false, message: 'Too many requests. Try again later.' },
 });
 

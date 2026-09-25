@@ -5,6 +5,7 @@ import StatCard from '../shared/components/StatCard';
 import { BrandAreaChart } from '../shared/components/ChartKit';
 import { dashboardAPI } from '../services/api';
 import { useLang } from '../shared/context/LanguageContext';
+import RoleBanner from '../shared/components/RoleBanner';
 import '../shared/components/StatCard.css';
 
 const AreaManagerDashboard = () => {
@@ -32,6 +33,7 @@ const AreaManagerDashboard = () => {
           <Plus size={16} /> {t('dash.addDealer')}
         </Link>
       </div>
+      <RoleBanner extra={data.myDealers?.length ? `${data.myDealers.length} ${t('dash.myDealers').toLowerCase()}` : ''} />
 
       <div className="stat-grid">
         <StatCard title={t('dash.myDealers')} value={cards.assignedDealers} icon={Store} />

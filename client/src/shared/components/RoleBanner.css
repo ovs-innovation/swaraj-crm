@@ -1,0 +1,18 @@
+.role-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+.role-banner strong { font-size: 0.95rem; }
+.role-banner span { font-size: 0.85rem; color: #4b5563; }
+.role-banner-sa,
+.role-banner-ho,
+.role-banner-am,
+.role-banner-dl {
+  background: #eef6fc;
+  border-color: #0078D4;
+}

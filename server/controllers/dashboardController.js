@@ -5,6 +5,7 @@ import Media from '../models/Media.js';
 import Activity from '../models/Activity.js';
 import User from '../models/User.js';
 import VideoJob from '../models/VideoJob.js';
+import SheetJob from '../models/SheetJob.js';
 import mongoose from 'mongoose';
 import { asyncHandler } from '../utils/helpers.js';
 
@@ -45,6 +46,9 @@ export const getSuperAdminDashboard = asyncHandler(async (req, res) => {
     scheduledVideos,
     publishedToday,
     failedVideos,
+    pendingSheets,
+    generatedSheets,
+    inboxSheets,
   ] = await Promise.all([
     User.countDocuments({ role: 'super_admin' }),
     User.countDocuments({ role: 'admin' }),
@@ -79,6 +83,13 @@ export const getSuperAdminDashboard = asyncHandler(async (req, res) => {
     VideoJob.countDocuments({ status: 'scheduled' }),
     VideoJob.countDocuments({ status: 'published', publishedAt: { $gte: today } }),
     VideoJob.countDocuments({ status: 'failed' }),
+    SheetJob.countDocuments({ status: 'pending' }),
+    SheetJob.countDocuments({ status: 'generated' }),
+    SheetJob.find({ status: { $in: ['pending', 'generated'] } })
+      .populate('areaManager', 'name employeeId')
+      .sort({ createdAt: -1 })
+      .limit(8)
+      .lean(),
   ]);
 
   res.json({
@@ -100,10 +111,13 @@ export const getSuperAdminDashboard = asyncHandler(async (req, res) => {
         scheduledVideos,
         publishedToday,
         failedVideos,
+        pendingSheets,
+        generatedSheets,
       },
       charts: { dealersByState, dealersByManager },
       recentActivities,
       recentHqUsers,
+      inboxSheets,
     },
   });
 });

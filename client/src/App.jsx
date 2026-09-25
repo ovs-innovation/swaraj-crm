@@ -73,7 +73,6 @@ const App = () => (
         <Route path="/admin/dealers/:id" element={<DealerProfile />} />
         <Route path="/admin/visits" element={<Visits />} />
         <Route path="/admin/media" element={<MediaPage adminMode />} />
-        <Route path="/admin/posters" element={<BulkPosters />} />
         <Route path="/admin/reports" element={<Reports />} />
         <Route path="/admin/audit-logs" element={<AuditLogs />} />
         <Route path="/admin/settings" element={<Settings />} />

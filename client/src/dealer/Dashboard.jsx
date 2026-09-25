@@ -4,6 +4,7 @@ import { Image, MapPin, CheckCircle, Clock, Upload, Phone } from 'lucide-react';
 import StatCard from '../shared/components/StatCard';
 import { dashboardAPI } from '../services/api';
 import { useLang } from '../shared/context/LanguageContext';
+import RoleBanner from '../shared/components/RoleBanner';
 import '../shared/components/StatCard.css';
 
 const DealerDashboard = () => {
@@ -33,6 +34,7 @@ const DealerDashboard = () => {
           <Upload size={16} /> {t('dash.uploadVideo')}
         </Link>
       </div>
+      <RoleBanner extra={dealer.dealerName ? `${dealer.dealerName}` : ''} />
 
       <div className="stat-grid">
         <StatCard title={t('dash.approvedPosts')} value={cards.approvedMedia} icon={Image} tone="ok" />

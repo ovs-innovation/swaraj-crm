@@ -6,6 +6,7 @@ import { BrandAreaChart, BrandBarChart } from '../shared/components/ChartKit';
 import { dashboardAPI } from '../services/api';
 import { useAuth } from '../shared/context/AuthContext';
 import { useLang } from '../shared/context/LanguageContext';
+import RoleBanner from '../shared/components/RoleBanner';
 import '../shared/components/StatCard.css';
 
 const AdminDashboard = () => {
@@ -41,6 +42,7 @@ const AdminDashboard = () => {
           <Users size={16} /> {t('dash.areaManagers')}
         </Link>
       </div>
+      <RoleBanner />
 
       <div className="stat-grid">
         <StatCard title={t('dash.areaManagers')} value={cards.totalAreaManagers} icon={Users} />

@@ -3,6 +3,20 @@
   background: var(--bg);
 }
 
+.workspace-chip {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #005A9E;
+}
+.workspace-who {
+  margin: 0.1rem 0 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
 .app-header {
   height: 64px;
   background: #005A9E;
@@ -75,11 +89,17 @@
 }
 
 .nav-label {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text-muted);
+  padding: 0.55rem 0.9rem 0.2rem;
+}
+.nav-block + .nav-block {
+  margin-top: 0.45rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #eef2f6;
 }
 
 .sidebar-close {
@@ -114,9 +134,9 @@
 }
 
 .sidebar-nav a.active {
-  background: #fff1f2;
-  color: var(--primary);
-  box-shadow: inset 3px 0 0 var(--primary);
+  background: #e8f3fb;
+  color: #005A9E;
+  box-shadow: inset 3px 0 0 #0078D4;
 }
 
 .main-content {

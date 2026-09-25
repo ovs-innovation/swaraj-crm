@@ -16,7 +16,6 @@ import {
   User,
   Upload,
   Crown,
-  Frame,
   Images,
   BookOpen,
   Share2,
@@ -36,59 +35,25 @@ const Layout = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const adminLinks = [
-    { to: '/admin', icon: LayoutDashboard, label: t('nav.dashboard') },
-    { to: '/admin/area-managers', icon: Users, label: t('nav.areaManagers') },
-    { to: '/admin/dealers', icon: Store, label: t('nav.dealers') },
-    { to: '/admin/visits', icon: MapPin, label: t('nav.visits') },
-    { to: '/admin/media', icon: Image, label: t('nav.media') },
-    { to: '/admin/posters', icon: Images, label: t('nav.posters') },
-    { to: '/admin/reports', icon: FileText, label: t('nav.reports') },
-    { to: '/admin/audit-logs', icon: Shield, label: t('nav.audit') },
-    { to: '/admin/settings', icon: Settings, label: t('nav.settings') },
-  ];
+  const L = (to, icon, label) => ({ to, icon, label });
 
-  const superAdminLinks = [
-    { to: '/super-admin', icon: LayoutDashboard, label: t('nav.dashboard') },
-    { to: '/super-admin/letterhead', icon: Frame, label: t('nav.letterhead') },
-    { to: '/super-admin/social', icon: Share2, label: t('nav.social') },
-    { to: '/super-admin/videos', icon: Clapperboard, label: t('nav.videos') },
-    { to: '/super-admin/queue', icon: Clapperboard, label: t('nav.queue') },
-    { to: '/super-admin/library', icon: Images, label: t('nav.library') },
-    { to: '/super-admin/templates', icon: Frame, label: t('nav.templates') },
-    { to: '/super-admin/health', icon: Shield, label: t('nav.health') },
-    { to: '/super-admin/posters', icon: Images, label: t('nav.posters') },
-    { to: '/admin/users', icon: Crown, label: t('nav.hqUsers') },
-    ...adminLinks.slice(1).filter((l) => l.to !== '/admin/posters'),
-  ];
-
-  const areaManagerLinks = [
-    { to: '/area-manager', icon: LayoutDashboard, label: t('nav.dashboard') },
-    { to: '/area-manager/dealers', icon: Store, label: t('nav.myDealers') },
-    { to: '/area-manager/visits', icon: MapPin, label: t('nav.visits') },
-    { to: '/area-manager/media', icon: Image, label: t('nav.approve') },
-    { to: '/area-manager/sheet', icon: FileText, label: t('nav.sendSheet') },
-    { to: '/area-manager/videos', icon: Clapperboard, label: t('nav.videos') },
-    { to: '/area-manager/reports', icon: ClipboardList, label: t('nav.reports') },
-  ];
-
-  const dealerLinks = [
-    { to: '/dealer', icon: LayoutDashboard, label: t('nav.dashboard') },
-    { to: '/dealer/profile', icon: User, label: t('nav.profile') },
-    { to: '/dealer/upload', icon: Upload, label: t('nav.upload') },
-    { to: '/dealer/videos', icon: Clapperboard, label: t('nav.videos') },
-    { to: '/dealer/posts', icon: Image, label: t('nav.posts') },
-    { to: '/dealer/visits', icon: MapPin, label: t('nav.visitHistory') },
-  ];
-
-  const links = isSuperAdmin
-    ? superAdminLinks
+  const groups = isSuperAdmin
+    ? [
+        { title: t('nav.gWork'), items: [L('/super-admin', LayoutDashboard, t('nav.dashboard')), L('/super-admin/posters', Images, t('nav.posters')), L('/super-admin/videos', Clapperboard, t('nav.videos')), L('/super-admin/social', Share2, t('nav.social'))] },
+        { title: t('nav.gPeople'), items: [L('/admin/users', Crown, t('nav.hqUsers')), L('/admin/area-managers', Users, t('nav.areaManagers')), L('/admin/dealers', Store, t('nav.dealers'))] },
+        { title: t('nav.gMore'), items: [L('/admin/visits', MapPin, t('nav.visits')), L('/admin/media', Image, t('nav.media')), L('/admin/reports', FileText, t('nav.reports')), L('/admin/audit-logs', Shield, t('nav.audit')), L('/admin/settings', Settings, t('nav.settings'))] },
+      ]
     : isHqAdmin
-      ? adminLinks
+      ? [
+          { items: [L('/admin', LayoutDashboard, t('nav.dashboard')), L('/admin/area-managers', Users, t('nav.areaManagers')), L('/admin/dealers', Store, t('nav.dealers'))] },
+          { title: t('nav.gMore'), items: [L('/admin/visits', MapPin, t('nav.visits')), L('/admin/media', Image, t('nav.media')), L('/admin/reports', FileText, t('nav.reports')), L('/admin/audit-logs', Shield, t('nav.audit')), L('/admin/settings', Settings, t('nav.settings'))] },
+        ]
       : isAreaManager
-        ? areaManagerLinks
-        : dealerLinks;
+        ? [{ items: [L('/area-manager', LayoutDashboard, t('nav.dashboard')), L('/area-manager/sheet', FileText, t('nav.sendSheet')), L('/area-manager/dealers', Store, t('nav.myDealers')), L('/area-manager/videos', Clapperboard, t('nav.videos')), L('/area-manager/media', Image, t('nav.approve')), L('/area-manager/visits', MapPin, t('nav.visits')), L('/area-manager/reports', ClipboardList, t('nav.reports'))] }]
+        : [{ items: [L('/dealer', LayoutDashboard, t('nav.dashboard')), L('/dealer/videos', Clapperboard, t('nav.videos')), L('/dealer/upload', Upload, t('nav.upload')), L('/dealer/posts', Image, t('nav.posts')), L('/dealer/visits', MapPin, t('nav.visitHistory')), L('/dealer/profile', User, t('nav.profile'))] }];
   const homePath = isSuperAdmin ? '/super-admin' : isHqAdmin ? '/admin' : isAreaManager ? '/area-manager' : '/dealer';
+  const workspace = isSuperAdmin ? 'sa' : isHqAdmin ? 'ho' : isAreaManager ? 'am' : 'dl';
+  const workspaceLabel = t(`roles.${user?.role || 'dealer'}`);
 
   const handleLogout = () => {
     logout();
@@ -96,7 +61,7 @@ const Layout = () => {
   };
 
   return (
-    <div className="layout">
+    <div className={`layout workspace-${workspace}`}>
       <header className="app-header">
         <button className="menu-btn" onClick={() => setSidebarOpen(true)}>
           <Menu size={22} />
@@ -123,17 +88,22 @@ const Layout = () => {
       <div className="layout-body">
         <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
           <div className="sidebar-header">
-            <p className="nav-label">{t('navigation')}</p>
+            <p className="workspace-chip">{workspaceLabel}</p>
             <button className="sidebar-close" onClick={() => setSidebarOpen(false)}>
               <X size={20} />
             </button>
           </div>
           <nav className="sidebar-nav">
-            {links.map(({ to, icon: Icon, label }) => (
-              <NavLink key={to} to={to} end={to === homePath} onClick={() => setSidebarOpen(false)}>
-                <Icon size={18} />
-                {label}
-              </NavLink>
+            {groups.map((g, gi) => (
+              <div key={gi} className="nav-block">
+                {g.title && <p className="nav-label">{g.title}</p>}
+                {g.items.map(({ to, icon: Icon, label }) => (
+                  <NavLink key={to} to={to} end={to === homePath} onClick={() => setSidebarOpen(false)}>
+                    <Icon size={18} />
+                    {label}
+                  </NavLink>
+                ))}
+              </div>
             ))}
           </nav>
         </aside>

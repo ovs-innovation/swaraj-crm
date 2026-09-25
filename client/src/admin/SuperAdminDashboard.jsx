@@ -1,126 +1,129 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Crown, Users, Store, ShieldOff, Clock, MapPin, Shield, Clapperboard, AlertTriangle, CalendarClock } from 'lucide-react';
-import StatCard from '../shared/components/StatCard';
+import { Users, Store, Clock, MapPin, Clapperboard, AlertTriangle, Images, Share2, ArrowRight } from 'lucide-react';
 import { BrandBarChart } from '../shared/components/ChartKit';
 import { dashboardAPI } from '../services/api';
+import { useAuth } from '../shared/context/AuthContext';
 import { useLang } from '../shared/context/LanguageContext';
-import '../shared/components/StatCard.css';
+import './SuperAdminDashboard.css';
 
 const SuperAdminDashboard = () => {
   const { t } = useLang();
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const load = () => {
+    dashboardAPI.getSuperAdmin()
+      .then((res) => setData(res.data.data))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
-    dashboardAPI.getSuperAdmin().then((res) => setData(res.data.data)).finally(() => setLoading(false));
+    load();
+    const id = setInterval(load, 45000);
+    return () => clearInterval(id);
   }, []);
 
   if (loading) return <div className="loading">{t('loading')}</div>;
   if (!data) return <div className="empty-state">{t('loadFail')}</div>;
 
-  const { cards, charts, recentActivities, recentHqUsers } = data;
+  const { cards, charts, recentActivities, inboxSheets } = data;
   const barData = (charts.dealersByManager || []).map((d) => ({ name: d.name, count: d.count }));
+  const waiting = (cards.pendingSheets || 0) + (cards.generatedSheets || 0) + (cards.pendingVideos || 0) + (cards.failedVideos || 0);
+
+  const jobs = [
+    { n: cards.pendingSheets || 0, label: t('dash.doPosters'), to: '/super-admin/posters', icon: Images },
+    { n: cards.generatedSheets || 0, label: t('dash.doSend'), to: '/super-admin/posters', icon: Images },
+    { n: cards.pendingVideos || 0, label: t('dash.doVideos'), to: '/super-admin/videos', icon: Clapperboard },
+    { n: cards.failedVideos || 0, label: t('dash.doFailed'), to: '/super-admin/videos', icon: AlertTriangle },
+  ].filter((j) => j.n > 0);
 
   return (
-    <div>
-      <div className="page-header">
+    <div className="sa-home">
+      <div className="sa-hero">
         <div>
+          <p className="sa-kicker">{t(`roles.${user?.role || 'super_admin'}`)} · {user?.name}</p>
           <h1>{t('dash.superTitle')}</h1>
           <p className="page-subtitle">{t('dash.superSub')}</p>
         </div>
-        <Link to="/admin/users" className="btn btn-primary">
-          <Crown size={16} /> {t('dash.manageHq')}
-        </Link>
+        <div className="sa-hero-meta">
+          <strong>{waiting}</strong>
+          <span>{t('dash.nowTitle')}</span>
+        </div>
       </div>
 
-      <div className="stat-grid">
-        <StatCard title={t('dash.superAdmins')} value={cards.totalSuperAdmins} icon={Crown} />
-        <StatCard title={t('dash.hoAdmins')} value={cards.totalAdmins} icon={Shield} />
-        <StatCard title={t('dash.areaManagers')} value={cards.totalAreaManagers} icon={Users} />
-        <StatCard title={t('dash.dealers')} value={cards.totalDealers} icon={Store} />
-        <StatCard title={t('dash.inactiveDealers')} value={cards.inactiveDealers} icon={ShieldOff} tone="mute" />
-        <StatCard title={t('dash.pendingApprovals')} value={cards.pendingApprovals} icon={Clock} tone="warn" />
-        <StatCard title={t('dash.todayVisits')} value={cards.todayVisits} icon={MapPin} />
-        <StatCard title={t('dash.pendingVideos')} value={cards.pendingVideos || 0} icon={Clapperboard} tone="warn" />
-        <StatCard title={t('dash.renderingVideos')} value={cards.renderingVideos || 0} icon={Clapperboard} />
-        <StatCard title={t('dash.waitingAm')} value={cards.waitingAmVideos || 0} icon={Clock} tone="warn" />
-        <StatCard title={t('dash.scheduledVideos')} value={cards.scheduledVideos || 0} icon={CalendarClock} />
-        <StatCard title={t('dash.publishedToday')} value={cards.publishedToday || 0} icon={Clapperboard} />
-        <StatCard title={t('dash.failedVideos')} value={cards.failedVideos || 0} icon={AlertTriangle} tone="mute" />
+      <div className="sa-now">
+        <h3 className="card-title">{t('dash.nowTitle')}</h3>
+        {jobs.length ? (
+          <div className="sa-now-grid">
+            {jobs.map((j) => (
+              <Link key={j.label} to={j.to} className="sa-now-card">
+                <j.icon size={18} />
+                <em>{j.n}</em>
+                <span>{j.label}</span>
+                <ArrowRight size={16} />
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <p className="sa-clear">{t('dash.nowClear')}</p>
+        )}
+      </div>
+
+      <div className="sa-actions">
+        <Link to="/super-admin/posters" className="sa-act"><Images size={18} /> {t('nav.posters')}</Link>
+        <Link to="/super-admin/videos" className="sa-act"><Clapperboard size={18} /> {t('nav.videos')}</Link>
+        <Link to="/super-admin/social" className="sa-act"><Share2 size={18} /> {t('dash.doSocial')}</Link>
+        <Link to="/admin/area-managers" className="sa-act"><Users size={18} /> {t('dash.doAm')}</Link>
+        <Link to="/admin/dealers" className="sa-act"><Store size={18} /> {t('dash.doDealers')}</Link>
+      </div>
+
+      {!!inboxSheets?.length && (
+        <div className="card sa-inbox">
+          <h3 className="card-title">{t('dash.inboxSheets')}</h3>
+          <div className="sa-inbox-list">
+            {inboxSheets.map((s) => (
+              <Link key={s._id} to="/super-admin/posters" className="sa-inbox-row">
+                <b>{s.areaManager?.name || '—'}</b>
+                <span>{s.fileName}</span>
+                <em>{t(s.status === 'generated' ? 'dash.sheetReady' : 'dash.sheetPending')}</em>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="sa-metrics">
+        <div className="sa-metric"><Users size={16} /><b>{cards.totalAreaManagers}</b><span>{t('dash.areaManagers')}</span></div>
+        <div className="sa-metric"><Store size={16} /><b>{cards.totalDealers}</b><span>{t('dash.dealers')}</span></div>
+        <div className="sa-metric"><MapPin size={16} /><b>{cards.todayVisits}</b><span>{t('dash.todayVisits')}</span></div>
+        <div className="sa-metric"><Clock size={16} /><b>{cards.pendingApprovals}</b><span>{t('dash.pendingApprovals')}</span></div>
+        <div className="sa-metric"><Clapperboard size={16} /><b>{cards.publishedToday || 0}</b><span>{t('dash.publishedToday')}</span></div>
+        <div className="sa-metric"><Clock size={16} /><b>{cards.waitingAmVideos || 0}</b><span>{t('dash.waitingAm')}</span></div>
       </div>
 
       <div className="dash-grid">
         <div className="card">
           <h3 className="card-title">{t('dash.dealersByAm')}</h3>
-          <BrandBarChart data={barData} horizontal={barData.length > 5} height={barData.length > 5 ? Math.max(280, barData.length * 36) : 280} />
+          <BrandBarChart data={barData} horizontal={barData.length > 5} height={barData.length > 5 ? Math.max(240, barData.length * 34) : 240} />
         </div>
-
         <div className="card">
-          <h3 className="card-title">{t('dash.hqUsers')}</h3>
-          {recentHqUsers?.length ? (
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t('name')}</th>
-                    <th>{t('users.role')}</th>
-                    <th>{t('status')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentHqUsers.map((u) => (
-                    <tr key={u._id}>
-                      <td>
-                        <strong>{u.name}</strong>
-                        <br />
-                        <small className="muted">{u.email}</small>
-                      </td>
-                      <td>
-                        <span className={`badge ${u.role === 'super_admin' ? 'badge-super' : 'badge-active'}`}>
-                          {t(`roles.${u.role}`)}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge badge-${u.status}`}>{t(u.status)}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <h3 className="card-title">{t('dash.systemActivity')}</h3>
+          {recentActivities?.length ? (
+            <ul className="sa-activity">
+              {recentActivities.map((a) => (
+                <li key={a._id}>
+                  <strong>{a.description || a.action}</strong>
+                  <span>{a.performedBy?.name || '—'} · {new Date(a.createdAt).toLocaleString()}</span>
+                </li>
+              ))}
+            </ul>
           ) : (
             <p className="empty-state">{t('noData')}</p>
           )}
         </div>
-      </div>
-
-      <div className="card" style={{ marginTop: '0.9rem' }}>
-        <h3 className="card-title">{t('dash.systemActivity')}</h3>
-        {recentActivities?.length ? (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>{t('audit.action')}</th>
-                  <th>{t('media.by')}</th>
-                  <th>{t('date')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentActivities.map((a) => (
-                  <tr key={a._id}>
-                    <td>{a.description || a.action}</td>
-                    <td>{a.performedBy?.name || '—'}</td>
-                    <td>{new Date(a.createdAt).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="empty-state">{t('noData')}</p>
-        )}
       </div>
     </div>
   );
