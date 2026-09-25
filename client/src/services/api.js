@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { setMediaBase } from '../utils/mediaUrl';
 
 export const AUTH_TOKEN_KEY = 'vastora_crm_token';
 export const AUTH_USER_KEY = 'vastora_crm_user';
@@ -22,7 +23,10 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    if (res.data?.publicBaseUrl) setMediaBase(res.data.publicBaseUrl);
+    return res;
+  },
   (err) => {
     const status = err.response?.status;
     const url = err.config?.url || '';

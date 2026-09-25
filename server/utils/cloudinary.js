@@ -26,13 +26,33 @@ const resourceType = (filePath = '', mime = '') => {
   return 'image';
 };
 
+export const publicBase = () => (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
+
+export const toPublicUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) return url;
+  const pathName = url.startsWith('/') ? url : `/${url}`;
+  const base = publicBase();
+  return base ? `${base}${pathName}` : pathName;
+};
+
 export const localFileMeta = (file) => {
   if (!file?.path) return { url: '', path: '', publicId: '' };
   const name = file.filename || path.basename(file.path);
-  return { url: `/uploads/${name}`, path: file.path, publicId: '' };
+  return { url: toPublicUrl(`/uploads/${name}`), path: file.path, publicId: '' };
 };
 
-export const attachCloudUrl = async (file, folder = 'swaraj-crm') => localFileMeta(file);
+export const attachCloudUrl = async (file, folder = 'swaraj-crm') => {
+  const local = localFileMeta(file);
+  if (!file?.path || !configured()) return local;
+  try {
+    const up = await uploadLocalFile(file.path, { folder, mime: file.mimetype });
+    if (up?.url) return { url: up.url, path: file.path, publicId: up.publicId };
+  } catch (err) {
+    console.error('Cloudinary upload failed:', err.message);
+  }
+  return local;
+};
 
 export const ensurePublicVideoUrl = async (job) => {
   const current = job.editedUrl || job.originalUrl || '';

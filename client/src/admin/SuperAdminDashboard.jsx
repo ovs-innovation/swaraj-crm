@@ -42,88 +42,92 @@ const SuperAdminDashboard = () => {
 
   return (
     <div className="sa-home">
-      <div className="sa-hero">
+      <div className="sa-cols">
         <div>
-          <p className="sa-kicker">{t(`roles.${user?.role || 'super_admin'}`)} · {user?.name}</p>
-          <h1>{t('dash.superTitle')}</h1>
-          <p className="page-subtitle">{t('dash.superSub')}</p>
-        </div>
-        <div className="sa-hero-meta">
-          <strong>{waiting}</strong>
-          <span>{t('dash.nowTitle')}</span>
-        </div>
-      </div>
-
-      <div className="sa-now">
-        <h3 className="card-title">{t('dash.nowTitle')}</h3>
-        {jobs.length ? (
-          <div className="sa-now-grid">
-            {jobs.map((j) => (
-              <Link key={j.label} to={j.to} className="sa-now-card">
-                <j.icon size={18} />
-                <em>{j.n}</em>
-                <span>{j.label}</span>
-                <ArrowRight size={16} />
-              </Link>
-            ))}
+          <div className="sa-hero">
+            <div>
+              <p className="sa-kicker">{t(`roles.${user?.role || 'super_admin'}`)} · {user?.name}</p>
+              <h1>{t('dash.superTitle')}</h1>
+              <p className="page-subtitle">{t('dash.superSub')}</p>
+            </div>
           </div>
-        ) : (
-          <p className="sa-clear">{t('dash.nowClear')}</p>
-        )}
-      </div>
 
-      <div className="sa-actions">
-        <Link to="/super-admin/posters" className="sa-act"><Images size={18} /> {t('nav.posters')}</Link>
-        <Link to="/super-admin/videos" className="sa-act"><Clapperboard size={18} /> {t('nav.videos')}</Link>
-        <Link to="/super-admin/social" className="sa-act"><Share2 size={18} /> {t('dash.doSocial')}</Link>
-        <Link to="/admin/area-managers" className="sa-act"><Users size={18} /> {t('dash.doAm')}</Link>
-        <Link to="/admin/dealers" className="sa-act"><Store size={18} /> {t('dash.doDealers')}</Link>
-      </div>
-
-      {!!inboxSheets?.length && (
-        <div className="card sa-inbox">
-          <h3 className="card-title">{t('dash.inboxSheets')}</h3>
-          <div className="sa-inbox-list">
-            {inboxSheets.map((s) => (
-              <Link key={s._id} to="/super-admin/posters" className="sa-inbox-row">
-                <b>{s.areaManager?.name || '—'}</b>
-                <span>{s.fileName}</span>
-                <em>{t(s.status === 'generated' ? 'dash.sheetReady' : 'dash.sheetPending')}</em>
-              </Link>
-            ))}
+          <div className="sa-now">
+            <h3 className="card-title">{t('dash.nowTitle')}</h3>
+            {jobs.length ? (
+              <div className="sa-now-grid">
+                {jobs.map((j) => (
+                  <Link key={j.label} to={j.to} className="sa-now-card">
+                    <j.icon size={18} />
+                    <em>{j.n}</em>
+                    <span>{j.label}</span>
+                    <ArrowRight size={16} />
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="sa-clear">{t('dash.nowClear')}</p>
+            )}
           </div>
-        </div>
-      )}
 
-      <div className="sa-metrics">
-        <div className="sa-metric"><Users size={16} /><b>{cards.totalAreaManagers}</b><span>{t('dash.areaManagers')}</span></div>
-        <div className="sa-metric"><Store size={16} /><b>{cards.totalDealers}</b><span>{t('dash.dealers')}</span></div>
-        <div className="sa-metric"><MapPin size={16} /><b>{cards.todayVisits}</b><span>{t('dash.todayVisits')}</span></div>
-        <div className="sa-metric"><Clock size={16} /><b>{cards.pendingApprovals}</b><span>{t('dash.pendingApprovals')}</span></div>
-        <div className="sa-metric"><Clapperboard size={16} /><b>{cards.publishedToday || 0}</b><span>{t('dash.publishedToday')}</span></div>
-        <div className="sa-metric"><Clock size={16} /><b>{cards.waitingAmVideos || 0}</b><span>{t('dash.waitingAm')}</span></div>
-      </div>
+          <div className="sa-actions">
+            <Link to="/super-admin/posters" className="sa-act"><Images size={16} /> {t('nav.posters')}</Link>
+            <Link to="/super-admin/videos" className="sa-act"><Clapperboard size={16} /> {t('nav.videos')}</Link>
+            <Link to="/super-admin/social" className="sa-act"><Share2 size={16} /> {t('dash.doSocial')}</Link>
+            <Link to="/admin/area-managers" className="sa-act"><Users size={16} /> {t('dash.doAm')}</Link>
+            <Link to="/admin/dealers" className="sa-act"><Store size={16} /> {t('dash.doDealers')}</Link>
+          </div>
 
-      <div className="dash-grid">
-        <div className="card">
-          <h3 className="card-title">{t('dash.dealersByAm')}</h3>
-          <BrandBarChart data={barData} horizontal={barData.length > 5} height={barData.length > 5 ? Math.max(240, barData.length * 34) : 240} />
-        </div>
-        <div className="card">
-          <h3 className="card-title">{t('dash.systemActivity')}</h3>
-          {recentActivities?.length ? (
-            <ul className="sa-activity">
-              {recentActivities.map((a) => (
-                <li key={a._id}>
-                  <strong>{a.description || a.action}</strong>
-                  <span>{a.performedBy?.name || '—'} · {new Date(a.createdAt).toLocaleString()}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="empty-state">{t('noData')}</p>
+          {!!inboxSheets?.length && (
+            <div className="card sa-inbox">
+              <h3 className="card-title">{t('dash.inboxSheets')}</h3>
+              <div className="sa-inbox-list">
+                {inboxSheets.map((s) => (
+                  <Link key={s._id} to="/super-admin/posters" className="sa-inbox-row">
+                    <b>{s.areaManager?.name || '—'}</b>
+                    <span>{s.fileName}</span>
+                    <em>{t(s.status === 'generated' ? 'dash.sheetReady' : 'dash.sheetPending')}</em>
+                  </Link>
+                ))}
+              </div>
+            </div>
           )}
+
+          <div className="card">
+            <h3 className="card-title">{t('dash.dealersByAm')}</h3>
+            <BrandBarChart data={barData} horizontal={barData.length > 5} height={barData.length > 5 ? Math.max(220, barData.length * 32) : 220} />
+          </div>
         </div>
+
+        <aside className="sa-side">
+          <div className="sa-hero-meta">
+            <strong>{waiting}</strong>
+            <span>{t('dash.nowTitle')}</span>
+          </div>
+          <div className="sa-metrics">
+            <div className="sa-metric"><Users size={16} /><b>{cards.totalAreaManagers}</b><span>{t('dash.areaManagers')}</span></div>
+            <div className="sa-metric"><Store size={16} /><b>{cards.totalDealers}</b><span>{t('dash.dealers')}</span></div>
+            <div className="sa-metric"><MapPin size={16} /><b>{cards.todayVisits}</b><span>{t('dash.todayVisits')}</span></div>
+            <div className="sa-metric"><Clock size={16} /><b>{cards.pendingApprovals}</b><span>{t('dash.pendingApprovals')}</span></div>
+            <div className="sa-metric"><Clapperboard size={16} /><b>{cards.publishedToday || 0}</b><span>{t('dash.publishedToday')}</span></div>
+            <div className="sa-metric"><Clock size={16} /><b>{cards.waitingAmVideos || 0}</b><span>{t('dash.waitingAm')}</span></div>
+          </div>
+          <div className="card">
+            <h3 className="card-title">{t('dash.systemActivity')}</h3>
+            {recentActivities?.length ? (
+              <ul className="sa-activity">
+                {recentActivities.map((a) => (
+                  <li key={a._id}>
+                    <strong>{a.description || a.action}</strong>
+                    <span>{a.performedBy?.name || '—'} · {new Date(a.createdAt).toLocaleString()}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-state">{t('noData')}</p>
+            )}
+          </div>
+        </aside>
       </div>
     </div>
   );

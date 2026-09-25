@@ -6,6 +6,7 @@ import SheetJob from '../models/SheetJob.js';
 import Dealer from '../models/Dealer.js';
 import { asyncHandler } from '../utils/helpers.js';
 import { parseDealerSheet } from '../utils/parseDealerSheet.js';
+import { attachCloudUrl, toPublicUrl } from '../utils/cloudinary.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -108,13 +109,14 @@ export const savePosters = asyncHandler(async (req, res) => {
         $or: [{ dealerName: new RegExp(`^${safe}$`, 'i') }, { dealerCode: new RegExp(`^${safe}$`, 'i') }],
       }).select('_id dealerName');
     }
+    const stored = await attachCloudUrl(files[i], 'swaraj-crm/posters');
     created.push(
       await Poster.create({
         areaManager: areaManagerId,
         sheet: job._id,
         dealer: dealer?._id,
         dealerName: dealer?.dealerName || name || `Dealer ${i + 1}`,
-        url: `/uploads/${files[i].filename}`,
+        url: stored.url,
         status: 'draft',
         createdBy: req.user._id,
       })
@@ -163,7 +165,7 @@ export const getPosters = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(200)
     .lean();
-  res.json({ success: true, data: posters });
+  res.json({ success: true, data: posters.map((p) => ({ ...p, url: toPublicUrl(p.url) })) });
 });
 
 export const reviewPoster = asyncHandler(async (req, res) => {
@@ -200,7 +202,7 @@ export const deletePoster = asyncHandler(async (req, res) => {
 });
 
 const unlinkPosterFile = (poster) => {
-  if (!poster?.url) return;
+  if (!poster?.url || poster.url.startsWith('http')) return;
   fs.unlink(path.join(__dirname, '..', poster.url.replace(/^\//, '')), () => {});
 };
 
@@ -223,7 +225,8 @@ export const updatePoster = asyncHandler(async (req, res) => {
   }
   if (req.file) {
     unlinkPosterFile(poster);
-    poster.url = `/uploads/${req.file.filename}`;
+    const stored = await attachCloudUrl(req.file, 'swaraj-crm/posters');
+    poster.url = stored.url;
   }
   await poster.save();
   res.json({ success: true, data: poster });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Clapperboard, Download, Play, RefreshCw } from 'lucide-react';
 import { videoAPI, dealerAPI, studioAPI } from '../../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -47,6 +47,7 @@ const VideoDesk = ({ mode = 'super' }) => {
   const [compare, setCompare] = useState('edited');
   const [stats, setStats] = useState(null);
   const [trail, setTrail] = useState([]);
+  const player = useRef(null);
 
   const load = async () => {
     const res = await videoAPI.list({ limit: 50 });
@@ -168,7 +169,7 @@ const VideoDesk = ({ mode = 'super' }) => {
       {msg && <div className="alert alert-success">{msg}</div>}
       {err && <div className="alert alert-error">{err}</div>}
 
-      {mode === 'dealer' && (
+      {(mode === 'dealer' || mode === 'super') && (
         <form className="card video-upload" onSubmit={submitDealer}>
           <h3>{t('video.upload')}</h3>
           {isSuperAdmin && (
@@ -198,7 +199,7 @@ const VideoDesk = ({ mode = 'super' }) => {
             <label>{t('video.hashtags')}</label>
             <input value={upload.hashtags} onChange={(e) => setUpload({ ...upload, hashtags: e.target.value })} />
           </div>
-          <button className="btn btn-primary" disabled={busy === 'upload'}><Clapperboard size={16} /> {t('video.sendReview')}</button>
+          <button className="btn btn-primary" disabled={busy === 'upload'}><Clapperboard size={16} /> {mode === 'super' ? t('video.upload') : t('video.sendReview')}</button>
         </form>
       )}
 
@@ -234,7 +235,12 @@ const VideoDesk = ({ mode = 'super' }) => {
                 <option value="edited">{t('video.current')}</option>
               </select>
             </div>
-            <video key={previewSrc} src={previewSrc} controls poster={mediaUrl(open.thumbnailUrl)} />
+            <div className="video-stage">
+              <video ref={player} key={previewSrc} src={previewSrc} controls poster={mediaUrl(open.thumbnailUrl)} />
+              {mode === 'super' && (spec.texts || []).filter((l) => l.text).map((layer, i) => (
+                <span key={i} className="video-text-ghost" style={{ left: `${(layer.x ?? 0.08) * 100}%`, top: `${(layer.y ?? 0.08) * 100}%`, color: layer.color, fontSize: `${Math.max(12, (layer.size || 36) / 3)}px` }}>{layer.text}</span>
+              ))}
+            </div>
             <p className="video-meta">{t(`video.st.${open.status}`)} · {open.durationSec ? `${Math.round(open.durationSec)}s` : ''}</p>
             {open.changeRequest && <div className="alert alert-error">{open.changeRequest}</div>}
             {open.errorMessage && <div className="alert alert-error">{open.errorMessage}</div>}
@@ -279,14 +285,14 @@ const VideoDesk = ({ mode = 'super' }) => {
                       <option value="480">480p</option>
                     </select>
                   </div>
-                </div>
-                <div className="form-row">
                   <div className="form-group">
                     <label>{t('video.rotate')}</label>
                     <select value={spec.rotate} onChange={(e) => setSpec({ ...spec, rotate: Number(e.target.value) })}>
                       <option value={0}>0</option><option value={90}>90</option><option value={180}>180</option><option value={270}>270</option>
                     </select>
                   </div>
+                </div>
+                <div className="form-row video-toggles">
                   <label className="chk"><input type="checkbox" checked={spec.flipH} onChange={(e) => setSpec({ ...spec, flipH: e.target.checked })} /> {t('video.flipH')}</label>
                   <label className="chk"><input type="checkbox" checked={spec.flipV} onChange={(e) => setSpec({ ...spec, flipV: e.target.checked })} /> {t('video.flipV')}</label>
                   <label className="chk"><input type="checkbox" checked={spec.compress} onChange={(e) => setSpec({ ...spec, compress: e.target.checked })} /> {t('video.compress')}</label>
@@ -301,6 +307,8 @@ const VideoDesk = ({ mode = 'super' }) => {
                     <div className="form-group"><label>{t('video.text')} {i + 1}</label><input value={layer.text} onChange={(e) => setText(i, { text: e.target.value })} /></div>
                     <div className="form-group"><label>{t('video.size')}</label><input type="number" value={layer.size} onChange={(e) => setText(i, { size: Number(e.target.value) })} /></div>
                     <div className="form-group"><label>{t('video.color')}</label><input type="color" value={layer.color} onChange={(e) => setText(i, { color: e.target.value })} /></div>
+                    <div className="form-group"><label>{t('video.posX')}</label><input type="range" min="0" max="1" step="0.01" value={layer.x ?? 0.08} onChange={(e) => setText(i, { x: Number(e.target.value) })} /></div>
+                    <div className="form-group"><label>{t('video.posY')}</label><input type="range" min="0" max="1" step="0.01" value={layer.y ?? 0.08} onChange={(e) => setText(i, { y: Number(e.target.value) })} /></div>
                   </div>
                 ))}
                 <button type="button" className="btn btn-outline btn-sm" onClick={() => setSpec({ ...spec, texts: [...(spec.texts || []), { text: '', size: 32, color: '#ffffff', x: 0.1, y: 0.8 }] })}>{t('video.addText')}</button>
@@ -312,7 +320,8 @@ const VideoDesk = ({ mode = 'super' }) => {
                 </div>
                 <div className="video-actions">
                   <button type="button" className="btn btn-outline" disabled={!!busy} onClick={saveDraft}>{t('video.saveDraft')}</button>
-                  <button type="button" className="btn btn-primary" disabled={!!busy} onClick={() => { setBusy('render'); run(async () => { await saveDraft(); const res = await videoAPI.sendAm(open._id); setMsg(res.data.message || t('video.queued')); }); }}><Play size={15} /> {t('video.renderAm')}</button>
+                  <button type="button" className="btn btn-outline" disabled={!!busy} onClick={() => { setBusy('preview'); run(async () => { await saveDraft(); await videoAPI.render(open._id); setMsg(t('video.rendered')); }); }}><Play size={15} /> {t('video.renderNow')}</button>
+                  <button type="button" className="btn btn-primary" disabled={!!busy} onClick={() => { setBusy('render'); run(async () => { await saveDraft(); const res = await videoAPI.sendAm(open._id); setMsg(res.data.message || t('video.queued')); }); }}>{t('video.renderAm')}</button>
                 </div>
                 {open.status === 'ready_to_publish' && (
                   <div className="video-publish">

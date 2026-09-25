@@ -5,7 +5,7 @@ import Visit from '../models/Visit.js';
 import Media from '../models/Media.js';
 import AreaManager from '../models/AreaManager.js';
 import { asyncHandler } from '../utils/helpers.js';
-import { isCloudinaryReady, uploadLocalFile } from '../utils/cloudinary.js';
+import { isCloudinaryReady, publicBase, toPublicUrl, uploadLocalFile } from '../utils/cloudinary.js';
 
 export const getAuditLogs = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, action, entity } = req.query;
@@ -28,7 +28,9 @@ export const getSettings = asyncHandler(async (req, res) => {
   if (!settings) {
     settings = await Settings.create({});
   }
-  res.json({ success: true, data: settings });
+  const data = settings.toObject();
+  if (data.letterhead?.imageUrl) data.letterhead.imageUrl = toPublicUrl(data.letterhead.imageUrl);
+  res.json({ success: true, data, publicBaseUrl: publicBase() });
 });
 
 export const updateSettings = asyncHandler(async (req, res) => {

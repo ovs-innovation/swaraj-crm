@@ -4,7 +4,7 @@ import { asyncHandler, paginate, paginationMeta } from '../utils/helpers.js';
 import { logAudit } from '../middleware/auditLog.js';
 import { logActivity } from '../utils/activityLogger.js';
 import { getFileType } from '../middleware/upload.js';
-import { attachCloudUrl } from '../utils/cloudinary.js';
+import { attachCloudUrl, toPublicUrl } from '../utils/cloudinary.js';
 
 const getAssignedDealerIds = async (areaManagerRef) => {
   const dealers = await Dealer.find({ areaManager: areaManagerRef }).select('_id').lean();
@@ -40,7 +40,11 @@ export const getMedia = asyncHandler(async (req, res) => {
     paginate(query, page, limit),
   ]);
 
-  res.json({ success: true, data: media, ...paginationMeta(total, page, limit) });
+  res.json({
+    success: true,
+    data: media.map((m) => ({ ...m, url: toPublicUrl(m.url) })),
+    ...paginationMeta(total, page, limit),
+  });
 });
 
 export const uploadMedia = asyncHandler(async (req, res) => {
