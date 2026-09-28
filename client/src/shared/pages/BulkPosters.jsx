@@ -276,14 +276,26 @@ const BulkPosters = () => {
             <div className="poster-live">
               {templateSrc ? <img src={templateSrc} alt="" /> : <div className="empty-state" style={{ minHeight: 220 }}>{t('posters.needTpl')}</div>}
               {templateSrc && (
-                <>
-                  <div className="poster-live-band top" style={{ height: `${headerPct}%`, background: letterhead?.headerBg || 'rgba(0, 90, 158, 0.72)' }} />
-                  <div className="poster-live-band bot" style={{ height: `${footerPct}%`, background: letterhead?.footerBg || 'rgba(28, 25, 23, 0.72)' }} />
-                  <div className="poster-live-line name" style={{ top: '3.5%', left: '4%', right: '8%', fontSize: '1.15rem' }}>{sampleVals.headerText}</div>
-                  <div className="poster-live-line" style={{ top: '9.5%', left: '4%', right: '8%', fontSize: '0.78rem' }}>{sampleVals.headerSub}</div>
-                  <div className="poster-live-line" style={{ bottom: '4.5%', left: '4%', width: '42%', fontSize: '0.78rem' }}>{sampleVals.footerLeft}</div>
-                  <div className="poster-live-line" style={{ bottom: '4.5%', right: '4%', width: '42%', textAlign: 'right', fontSize: '0.78rem' }}>{sampleVals.footerRight}</div>
-                </>
+                <div className="poster-live-footer-strip">
+                  <div className="poster-strip-badge">
+                    <img src="/swaraj-logo.png" alt="Swaraj" className="poster-strip-logo" />
+                    <span className="poster-strip-dealer">{sampleVals.headerText || 'Dealer Name'}</span>
+                  </div>
+                  <div className="poster-strip-center">
+                    <span className="poster-strip-icon pin">📍</span>
+                    <div className="poster-strip-text">
+                      <strong>{sampleVals.headerSub || 'Address Details'}</strong>
+                    </div>
+                  </div>
+                  <div className="poster-strip-divider" />
+                  <div className="poster-strip-right">
+                    <span className="poster-strip-icon phone">📞</span>
+                    <div className="poster-strip-text">
+                      <strong>{sampleVals.footerLeft || 'Contact Number'}</strong>
+                      {sampleVals.footerRight && <small>{sampleVals.footerRight}</small>}
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
             <div className="poster-work-side">

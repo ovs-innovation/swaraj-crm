@@ -258,6 +258,111 @@
   letter-spacing: 0.02em;
 }
 
+.poster-live-footer-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #BA0C2F;
+  border-top: 2px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  gap: 0.65rem;
+  z-index: 10;
+  box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.poster-strip-badge {
+  background: #ffffff;
+  border-radius: 6px;
+  border: 1.5px solid #BA0C2F;
+  padding: 0.25rem 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  max-width: 38%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
+}
+
+.poster-strip-logo {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+}
+
+.poster-strip-dealer {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #008744;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+.poster-strip-center {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.poster-strip-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.poster-strip-text {
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.poster-strip-text strong {
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.poster-strip-text small {
+  font-size: 0.68rem;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.poster-strip-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+}
+
+.poster-strip-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
 .poster-actions {
   display: flex;
   gap: 0.55rem;
