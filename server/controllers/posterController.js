@@ -247,3 +247,29 @@ export const bulkDeletePosters = asyncHandler(async (req, res) => {
   const result = await Poster.deleteMany(filter);
   res.json({ success: true, data: { deleted: result.deletedCount } });
 });
+
+export const deleteSheet = asyncHandler(async (req, res) => {
+  const sheet = await SheetJob.findById(req.params.id);
+  if (!sheet) return res.status(404).json({ success: false, message: 'Sheet not found' });
+
+  if (req.user.role === 'area_manager') {
+    if (String(sheet.areaManager) !== String(req.user.areaManagerRef)) {
+      return res.status(403).json({ success: false, message: 'Not allowed' });
+    }
+  } else if (!['super_admin', 'admin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Not allowed' });
+  }
+
+  if (sheet.fileUrl && !sheet.fileUrl.startsWith('http')) {
+    const filePath = path.join(__dirname, '..', sheet.fileUrl.replace(/^\//, ''));
+    fs.unlink(filePath, () => {});
+  }
+
+  const posters = await Poster.find({ sheet: sheet._id });
+  posters.forEach(unlinkPosterFile);
+  await Poster.deleteMany({ sheet: sheet._id });
+
+  await sheet.deleteOne();
+  res.json({ success: true, message: 'Sheet and associated posters deleted successfully' });
+});
+

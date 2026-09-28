@@ -183,7 +183,7 @@ export const sendToAm = asyncHandler(async (req, res) => {
       title: 'Review Required',
       body: 'A video is waiting for your review.',
       type: 'review',
-      link: '/area-manager/videos',
+      link: '/territory-manager/videos',
       video: job._id,
     });
     logAudit(req, 'send_am', 'video_job', job._id);

@@ -38,7 +38,7 @@ const AdminDashboard = () => {
           <h1>{t('dash.hoTitle')}</h1>
           <p className="page-subtitle">{t('dash.hoSub')}</p>
         </div>
-        <Link to="/admin/area-managers" className="btn btn-primary">
+        <Link to="/admin/territory-managers" className="btn btn-primary">
           <Users size={16} /> {t('dash.areaManagers')}
         </Link>
       </div>

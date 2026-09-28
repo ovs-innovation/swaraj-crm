@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { postersAPI } from '../services/api';
 import { useLang } from '../shared/context/LanguageContext';
 import { mediaUrl } from '../utils/mediaUrl';
@@ -26,6 +27,29 @@ const AmSheetUpload = () => {
   useEffect(() => {
     load();
   }, []);
+
+  const confirmDeleteSheet = (s) => {
+    if (!s?._id) return;
+    setAsk({
+      danger: true,
+      title: t('posters.deleteSheet'),
+      message: (t('posters.confirmDeleteSheet') || 'Delete {file}? This will permanently remove this Excel sheet and all associated posters.').replace('{file}', s.fileName || 'this Excel'),
+      run: async () => {
+        setBusy(true);
+        setError('');
+        try {
+          await postersAPI.deleteSheet(s._id);
+          setMsg(t('posters.sheetDeleted') || 'Sheet deleted');
+          load();
+        } catch (err) {
+          setError(err.response?.data?.message || t('posters.fail'));
+        } finally {
+          setBusy(false);
+          setAsk(null);
+        }
+      },
+    });
+  };
 
   const onSheet = (e) => {
     const file = e.target.files?.[0];
@@ -84,7 +108,7 @@ const AmSheetUpload = () => {
     <div className="poster-page">
       <div className="page-header">
         <div>
-          <span className="poster-kicker">Swaraj · Area</span>
+          <span className="poster-kicker">Swaraj · Territory</span>
           <h1>{t('posters.amTitle')}</h1>
           <p className="page-subtitle">{t('posters.amSub')}</p>
         </div>
@@ -108,6 +132,7 @@ const AmSheetUpload = () => {
                 <th>{t('posters.rows')}</th>
                 <th>{t('status')}</th>
                 <th>{t('date')}</th>
+                <th style={{ width: '80px', textAlign: 'center' }}>{t('actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -121,6 +146,16 @@ const AmSheetUpload = () => {
                     </span>
                   </td>
                   <td>{new Date(s.createdAt).toLocaleString()}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    <button
+                      type="button"
+                      className="poster-sheet-del-btn"
+                      title={t('posters.deleteSheet')}
+                      onClick={() => confirmDeleteSheet(s)}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

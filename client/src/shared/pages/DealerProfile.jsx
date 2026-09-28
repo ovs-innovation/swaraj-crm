@@ -44,7 +44,7 @@ const DealerProfile = () => {
             <div><strong>Contact Person</strong><p>{dealer.contactPerson}</p></div>
             <div><strong>Mobile</strong><p>{dealer.mobile}</p></div>
             <div><strong>Email</strong><p>{dealer.email || '—'}</p></div>
-            <div><strong>Area Manager</strong><p>{dealer.areaManager?.name || '—'}</p></div>
+            <div><strong>Territory Manager (TM)</strong><p>{dealer.areaManager?.name || '—'}</p></div>
             <div><strong>Address</strong><p>{dealer.address || '—'}</p></div>
             <div><strong>City</strong><p>{dealer.city || '—'}</p></div>
             <div><strong>GST</strong><p>{dealer.gstNumber || '—'}</p></div>

@@ -8,14 +8,14 @@ export const PORTAL_PORTS = {
 export const PORTAL_PATHS = {
   super_admin: '/login/super-admin',
   admin: '/login/admin',
-  area_manager: '/login/area-manager',
+  area_manager: '/login/territory-manager',
   dealer: '/login/dealer',
 };
 
 export const PORTAL_HINT = {
   super_admin: 'superadmin@vastora.com · super123',
   admin: 'admin@vastora.com · admin123',
-  area_manager: 'Own AM email · default password manager123',
+  area_manager: 'Own TM email · default password manager123',
   dealer: 'Own dealer email · default password dealer123',
 };
 
@@ -33,7 +33,7 @@ export const getPortalRole = () => {
   const path = window.location.pathname;
   if (path.startsWith('/login/super-admin')) return 'super_admin';
   if (path.startsWith('/login/admin')) return 'admin';
-  if (path.startsWith('/login/area-manager')) return 'area_manager';
+  if (path.startsWith('/login/area-manager') || path.startsWith('/login/territory-manager')) return 'area_manager';
   if (path.startsWith('/login/dealer')) return 'dealer';
   return '';
 };

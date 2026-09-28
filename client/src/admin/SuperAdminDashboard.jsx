@@ -74,7 +74,7 @@ const SuperAdminDashboard = () => {
             <Link to="/super-admin/posters" className="sa-act"><Images size={16} /> {t('nav.posters')}</Link>
             <Link to="/super-admin/videos" className="sa-act"><Clapperboard size={16} /> {t('nav.videos')}</Link>
             <Link to="/super-admin/social" className="sa-act"><Share2 size={16} /> {t('dash.doSocial')}</Link>
-            <Link to="/admin/area-managers" className="sa-act"><Users size={16} /> {t('dash.doAm')}</Link>
+            <Link to="/admin/territory-managers" className="sa-act"><Users size={16} /> {t('dash.doAm')}</Link>
             <Link to="/admin/dealers" className="sa-act"><Store size={16} /> {t('dash.doDealers')}</Link>
           </div>
 

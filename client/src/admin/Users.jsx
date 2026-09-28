@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Crown } from 'lucide-react';
+import { Plus, Search, Crown, Eye, EyeOff, X } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { usersAPI } from '../services/api';
 import { useAuth } from '../shared/context/AuthContext';
@@ -15,6 +15,7 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [editId, setEditId] = useState(null);
   const [error, setError] = useState('');
@@ -26,6 +27,16 @@ const Users = () => {
   };
 
   useEffect(() => { if (isSuperAdmin) fetchUsers(); }, [search, isSuperAdmin]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && showModal) {
+        setShowModal(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showModal]);
 
   if (!isSuperAdmin) return <Navigate to="/admin" replace />;
 
@@ -131,13 +142,42 @@ const Users = () => {
       </div>
 
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{editId ? t('users.editTitle') : t('users.addTitle')}</h2>
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>{editId ? t('users.editTitle') : t('users.addTitle')}</h2>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setShowModal(false)}
+                title="Close (Esc)"
+              >
+                <X size={20} />
+              </button>
+            </div>
             {error && <div className="alert alert-error">{error}</div>}
-            <form onSubmit={handleSubmit}>
-              <div className="form-group"><label>{t('name')}</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
-              <div className="form-group"><label>{t('email')}</label><input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required /></div>
+            <form onSubmit={handleSubmit} autoComplete="off">
+              <div className="form-group">
+                <label>{t('name')}</label>
+                <input
+                  name="hq_user_name"
+                  autoComplete="off"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>{t('email')}</label>
+                <input
+                  type="email"
+                  name="hq_user_email"
+                  autoComplete="off"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                />
+              </div>
               <div className="form-group">
                 <label>{t('users.role')}</label>
                 <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
@@ -147,7 +187,27 @@ const Users = () => {
               </div>
               <div className="form-group">
                 <label>{editId ? t('users.newPassword') : t('users.password')}</label>
-                <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required={!editId} minLength={6} />
+                <div className="password-input-wrap">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    name="hq_user_password"
+                    autoComplete="new-password"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    required={!editId}
+                    minLength={6}
+                    placeholder={editId ? 'Leave blank to keep current' : 'Min 6 characters'}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? 'Hide password' : 'Show password'}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>{t('cancel')}</button>

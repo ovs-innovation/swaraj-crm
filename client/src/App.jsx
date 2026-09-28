@@ -46,7 +46,8 @@ const App = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/login/super-admin" element={<Login />} />
     <Route path="/login/admin" element={<Login />} />
-    <Route path="/login/area-manager" element={<Login />} />
+    <Route path="/login/area-manager" element={<Navigate to="/login/territory-manager" replace />} />
+    <Route path="/login/territory-manager" element={<Login />} />
     <Route path="/login/dealer" element={<Login />} />
     <Route path="/" element={<HomeRedirect />} />
 
@@ -68,7 +69,8 @@ const App = () => (
       <Route element={<Layout />}>
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/admin/users" element={<Users />} />
-        <Route path="/admin/area-managers" element={<AreaManagers />} />
+        <Route path="/admin/area-managers" element={<Navigate to="/admin/territory-managers" replace />} />
+        <Route path="/admin/territory-managers" element={<AreaManagers />} />
         <Route path="/admin/dealers" element={<Dealers basePath="/admin" />} />
         <Route path="/admin/dealers/:id" element={<DealerProfile />} />
         <Route path="/admin/visits" element={<Visits />} />
@@ -81,14 +83,25 @@ const App = () => (
 
     <Route element={<ProtectedRoute roles={['area_manager']} />}>
       <Route element={<Layout />}>
-        <Route path="/area-manager" element={<AreaManagerDashboard />} />
-        <Route path="/area-manager/dealers" element={<Dealers basePath="/area-manager" />} />
-        <Route path="/area-manager/dealers/:id" element={<DealerProfile />} />
-        <Route path="/area-manager/visits" element={<Visits />} />
-        <Route path="/area-manager/media" element={<MediaPage approvalMode />} />
-        <Route path="/area-manager/sheet" element={<AmSheetUpload />} />
-        <Route path="/area-manager/videos" element={<VideoDesk mode="am" />} />
-        <Route path="/area-manager/reports" element={<Reports />} />
+        {/* Territory Manager Primary Routes */}
+        <Route path="/territory-manager" element={<AreaManagerDashboard />} />
+        <Route path="/territory-manager/dealers" element={<Dealers basePath="/territory-manager" />} />
+        <Route path="/territory-manager/dealers/:id" element={<DealerProfile />} />
+        <Route path="/territory-manager/visits" element={<Visits />} />
+        <Route path="/territory-manager/media" element={<MediaPage approvalMode />} />
+        <Route path="/territory-manager/sheet" element={<AmSheetUpload />} />
+        <Route path="/territory-manager/videos" element={<VideoDesk mode="am" />} />
+        <Route path="/territory-manager/reports" element={<Reports />} />
+
+        {/* Redirect old /area-manager URLs to /territory-manager */}
+        <Route path="/area-manager" element={<Navigate to="/territory-manager" replace />} />
+        <Route path="/area-manager/dealers" element={<Navigate to="/territory-manager/dealers" replace />} />
+        <Route path="/area-manager/dealers/:id" element={<Navigate to="/territory-manager/dealers" replace />} />
+        <Route path="/area-manager/visits" element={<Navigate to="/territory-manager/visits" replace />} />
+        <Route path="/area-manager/media" element={<Navigate to="/territory-manager/media" replace />} />
+        <Route path="/area-manager/sheet" element={<Navigate to="/territory-manager/sheet" replace />} />
+        <Route path="/area-manager/videos" element={<Navigate to="/territory-manager/videos" replace />} />
+        <Route path="/area-manager/reports" element={<Navigate to="/territory-manager/reports" replace />} />
       </Route>
     </Route>
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import { postersAPI, settingsAPI } from '../../services/api';
 import { useLang } from '../context/LanguageContext';
 import { composePosterBlob, loadPosterImage, cellFromRow, guessPosterMapping } from '../../utils/composePoster';
@@ -45,6 +46,33 @@ const BulkPosters = () => {
     }).catch(() => {});
     loadSheets();
   }, []);
+
+  const confirmDeleteSheet = (s) => {
+    if (!s?._id) return;
+    setAsk({
+      danger: true,
+      title: t('posters.deleteSheet'),
+      message: (t('posters.confirmDeleteSheet') || 'Delete {file}? This will permanently remove this Excel sheet and all associated posters for both Super Admin and Territory Manager. This cannot be undone.').replace('{file}', s.fileName || 'this Excel'),
+      run: async () => {
+        setBusy(true);
+        setError('');
+        try {
+          await postersAPI.deleteSheet(s._id);
+          setMsg(t('posters.sheetDeleted') || 'Excel sheet deleted successfully');
+          if (job?._id === s._id) {
+            setJob(null);
+            setPosters([]);
+          }
+          await loadSheets();
+        } catch (err) {
+          setError(err.response?.data?.message || t('posters.fail'));
+        } finally {
+          setBusy(false);
+          setAsk(null);
+        }
+      },
+    });
+  };
 
   const openJob = async (s) => {
     setError('');
@@ -169,9 +197,20 @@ const BulkPosters = () => {
           <p className="page-subtitle">{job ? `${job.areaManager?.name || ''} · ${job.fileName}` : t('posters.subSimple')}</p>
         </div>
         {job && (
-          <button type="button" className="btn btn-outline" onClick={() => { setJob(null); setPosters([]); setMsg(''); }}>
-            {t('posters.backSheets')}
-          </button>
+          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              style={{ color: '#dc2626', borderColor: '#fca5a5' }}
+              onClick={() => confirmDeleteSheet(job)}
+              title={t('posters.deleteSheet')}
+            >
+              <Trash2 size={16} /> {t('posters.deleteSheet')}
+            </button>
+            <button type="button" className="btn btn-outline" onClick={() => { setJob(null); setPosters([]); setMsg(''); }}>
+              {t('posters.backSheets')}
+            </button>
+          </div>
         )}
       </div>
       {msg && <div className="alert alert-success">{msg}</div>}
@@ -194,17 +233,34 @@ const BulkPosters = () => {
                 </p>
                 <div className="poster-sheet-list">
                   {g.items.map((s) => (
-                    <button key={s._id} type="button" className="poster-sheet-item" onClick={() => openJob(s)}>
-                      <strong>{s.fileName}</strong>
-                      <span>
-                        {t('posters.dealersN').replace('{n}', String(s.rows?.length || 0))}
-                        {' · '}
-                        {t('posters.received')} {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : ''}
-                        {' · '}
-                        {t(`posters.st.${s.status || 'pending'}`)}
-                      </span>
-                      <em>{t('posters.openThis')}</em>
-                    </button>
+                    <div key={s._id} className="poster-sheet-item">
+                      <div className="poster-sheet-info" onClick={() => openJob(s)} role="button" tabIndex={0}>
+                        <strong>{s.fileName}</strong>
+                        <span>
+                          {t('posters.dealersN').replace('{n}', String(s.rows?.length || 0))}
+                          {' · '}
+                          {t('posters.received')} {s.createdAt ? new Date(s.createdAt).toLocaleDateString() : ''}
+                          {' · '}
+                          {t(`posters.st.${s.status || 'pending'}`)}
+                        </span>
+                      </div>
+                      <div className="poster-sheet-actions">
+                        <button type="button" className="poster-sheet-open-btn" onClick={() => openJob(s)}>
+                          {t('posters.openThis')}
+                        </button>
+                        <button
+                          type="button"
+                          className="poster-sheet-del-btn"
+                          title={t('posters.deleteSheet')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            confirmDeleteSheet(s);
+                          }}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -343,7 +399,7 @@ const BulkPosters = () => {
           <LetterheadEditor />
         </div>
       )}
-      <ConfirmDialog open={!!ask} title={ask?.title} message={ask?.message} busy={busy} onClose={() => !busy && setAsk(null)} onConfirm={() => ask?.run?.()} />
+      <ConfirmDialog open={!!ask} title={ask?.title} message={ask?.message} danger={ask?.danger} busy={busy} onClose={() => !busy && setAsk(null)} onConfirm={() => ask?.run?.()} />
     </div>
   );
 };

@@ -112,7 +112,10 @@ export const getMyDealerProfile = asyncHandler(async (req, res) => {
 });
 
 export const createDealer = asyncHandler(async (req, res) => {
-  const { loginEmail, loginPassword, ...dealerData } = req.body;
+  let { loginEmail, loginPassword, ...dealerData } = req.body;
+  if (!loginEmail && loginPassword && dealerData.email) {
+    loginEmail = dealerData.email;
+  }
 
   if (req.user.role === 'area_manager') {
     if (!req.user.areaManagerRef) {

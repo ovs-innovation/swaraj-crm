@@ -40,18 +40,18 @@ const Layout = () => {
   const groups = isSuperAdmin
     ? [
         { title: t('nav.gWork'), items: [L('/super-admin', LayoutDashboard, t('nav.dashboard')), L('/super-admin/posters', Images, t('nav.posters')), L('/super-admin/videos', Clapperboard, t('nav.videos')), L('/super-admin/social', Share2, t('nav.social'))] },
-        { title: t('nav.gPeople'), items: [L('/admin/users', Crown, t('nav.hqUsers')), L('/admin/area-managers', Users, t('nav.areaManagers')), L('/admin/dealers', Store, t('nav.dealers'))] },
+        { title: t('nav.gPeople'), items: [L('/admin/users', Crown, t('nav.hqUsers')), L('/admin/territory-managers', Users, t('nav.areaManagers')), L('/admin/dealers', Store, t('nav.dealers'))] },
         { title: t('nav.gMore'), items: [L('/admin/visits', MapPin, t('nav.visits')), L('/admin/media', Image, t('nav.media')), L('/admin/reports', FileText, t('nav.reports')), L('/admin/audit-logs', Shield, t('nav.audit')), L('/admin/settings', Settings, t('nav.settings'))] },
       ]
     : isHqAdmin
       ? [
-          { items: [L('/admin', LayoutDashboard, t('nav.dashboard')), L('/admin/area-managers', Users, t('nav.areaManagers')), L('/admin/dealers', Store, t('nav.dealers'))] },
+          { items: [L('/admin', LayoutDashboard, t('nav.dashboard')), L('/admin/territory-managers', Users, t('nav.areaManagers')), L('/admin/dealers', Store, t('nav.dealers'))] },
           { title: t('nav.gMore'), items: [L('/admin/visits', MapPin, t('nav.visits')), L('/admin/media', Image, t('nav.media')), L('/admin/reports', FileText, t('nav.reports')), L('/admin/audit-logs', Shield, t('nav.audit')), L('/admin/settings', Settings, t('nav.settings'))] },
         ]
       : isAreaManager
-        ? [{ items: [L('/area-manager', LayoutDashboard, t('nav.dashboard')), L('/area-manager/sheet', FileText, t('nav.sendSheet')), L('/area-manager/dealers', Store, t('nav.myDealers')), L('/area-manager/videos', Clapperboard, t('nav.videos')), L('/area-manager/media', Image, t('nav.approve')), L('/area-manager/visits', MapPin, t('nav.visits')), L('/area-manager/reports', ClipboardList, t('nav.reports'))] }]
+        ? [{ items: [L('/territory-manager', LayoutDashboard, t('nav.dashboard')), L('/territory-manager/sheet', FileText, t('nav.sendSheet')), L('/territory-manager/dealers', Store, t('nav.myDealers')), L('/territory-manager/videos', Clapperboard, t('nav.videos')), L('/territory-manager/media', Image, t('nav.approve')), L('/territory-manager/visits', MapPin, t('nav.visits')), L('/territory-manager/reports', ClipboardList, t('nav.reports'))] }]
         : [{ items: [L('/dealer', LayoutDashboard, t('nav.dashboard')), L('/dealer/videos', Clapperboard, t('nav.videos')), L('/dealer/upload', Upload, t('nav.upload')), L('/dealer/posts', Image, t('nav.posts')), L('/dealer/visits', MapPin, t('nav.visitHistory')), L('/dealer/profile', User, t('nav.profile'))] }];
-  const homePath = isSuperAdmin ? '/super-admin' : isHqAdmin ? '/admin' : isAreaManager ? '/area-manager' : '/dealer';
+  const homePath = isSuperAdmin ? '/super-admin' : isHqAdmin ? '/admin' : isAreaManager ? '/territory-manager' : '/dealer';
   const workspace = isSuperAdmin ? 'sa' : isHqAdmin ? 'ho' : isAreaManager ? 'am' : 'dl';
   const workspaceLabel = t(`roles.${user?.role || 'dealer'}`);
 

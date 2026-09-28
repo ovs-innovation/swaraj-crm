@@ -59,7 +59,7 @@
     <header class="bar">
       <small>Mahindra &amp; Mahindra Ltd. · Swaraj Division</small>
       <h1>Swaraj Dealer CRM — User Guide</h1>
-      <p style="margin:.4rem 0 0;opacity:.92;font-size:.9rem">How Super Admin, Head Office, Area Manager and Dealer work together.</p>
+      <p style="margin:.4rem 0 0;opacity:.92;font-size:.9rem">How Super Admin, Head Office, Territory Manager and Dealer work together.</p>
     </header>
     <div class="actions no-print">
       <button class="btn" type="button" onclick="window.print()">Download / Print PDF</button>
@@ -68,17 +68,17 @@
 
     <section class="card">
       <h2>1. Idea of the product</h2>
-      <p>Swaraj Dealer CRM is the internal tool for the dealer network. Head office sees the full country picture. Area managers run their own dealers. Dealers upload shop/event media. Super Admin controls branding and dealer posters made from Excel lists.</p>
-      <p class="hi"><strong>हिन्दी:</strong> यह सिस्टम डीलर नेटवर्क चलाने के लिए है. सुपर एडमिन पूरा कंट्रोल, हेड ऑफिस फील्ड ऑपरेशन, एरिया मैनेजर अपने डीलर, डीलर अपनी दुकान की फोटो/वीडियो.</p>
+      <p>Swaraj Dealer CRM is the internal tool for the dealer network. Head office sees the full country picture. Territory managers run their own dealers. Dealers upload shop/event media. Super Admin controls branding and dealer posters made from Excel lists.</p>
+      <p class="hi"><strong>हिन्दी:</strong> यह सिस्टम डीलर नेटवर्क चलाने के लिए है. सुपर एडमिन पूरा कंट्रोल, हेड ऑफिस फील्ड ऑपरेशन, टेरिटरी मैनेजर अपने डीलर, डीलर अपनी दुकान की फोटो/वीडियो.</p>
     </section>
 
     <section class="card">
       <h2>2. Four roles</h2>
       <div class="roles">
         <div class="role"><b>Super Admin</b>Highest access. HQ users, letterhead (header/footer on pictures), dealer posters, everything Head Office can do.</div>
-        <div class="role"><b>Head Office Admin</b>Area managers, all dealers, visits, media, reports, audit, settings. Can also create posters from AM sheets.</div>
-        <div class="role"><b>Area Manager</b>Only their dealers. Create/edit dealers, log visits, approve dealer uploads, send Excel lists, approve posters made from their Excel.</div>
-        <div class="role"><b>Dealer</b>Own profile, upload photos/videos, see approved posts, visit history. Cannot see other dealers or other areas.</div>
+        <div class="role"><b>Head Office Admin</b>Territory managers, all dealers, visits, media, reports, audit, settings. Can also create posters from TM sheets.</div>
+        <div class="role"><b>Territory Manager</b>Only their dealers. Create/edit dealers, log visits, approve dealer uploads, send Excel lists, approve posters made from their Excel.</div>
+        <div class="role"><b>Dealer</b>Own profile, upload photos/videos, see approved posts, visit history. Cannot see other dealers or other territories.</div>
       </div>
       <p>Login: choose the role card (no password screen). Session stays on refresh; it does not jump to another profile.</p>
     </section>
@@ -86,33 +86,33 @@
     <section class="card">
       <h2>3. How people move through the app</h2>
       <div class="flow">Dealer uploads media
-   → Area Manager approves / rejects
+   → Territory Manager approves / rejects
    → Approved posts are visible
 
-Area Manager uploads Excel of dealers
+Territory Manager uploads Excel of dealers
    → Super Admin / HO opens that sheet only
    → Maps columns + picture → 8K posters
-   → Sends for approval to THE SAME Area Manager
-   → That AM approves / rejects
-   → Never sent to another AM</div>
+   → Sends for approval to THE SAME Territory Manager
+   → That TM approves / rejects
+   → Never sent to another TM</div>
     </section>
 
     <section class="card">
       <h2>4. Super Admin panel</h2>
       <ol>
-        <li><strong>Dashboard</strong> — totals, dealers per AM chart, HQ users, activity.</li>
+        <li><strong>Dashboard</strong> — totals, dealers per TM chart, HQ users, activity.</li>
         <li><strong>Header / Footer</strong> — upload a full picture, drag texts, fonts, colours, sizes. Download HD/8K PNG. This layout is used on bulk posters.</li>
-        <li><strong>Dealer posters</strong> — inbox of Excel files from area managers. Open a sheet → map Name / Address / Phone / Website → Create posters → confirm → progress bar. Then <em>Send to this area manager for approval</em> (confirm). Edit / delete / bulk delete with confirm. Full preview with previous/next.</li>
+        <li><strong>Dealer posters</strong> — inbox of Excel files from territory managers. Open a sheet → map Name / Address / Phone / Website → Create posters → confirm → progress bar. Then <em>Send to this territory manager for approval</em> (confirm). Edit / delete / bulk delete with confirm. Full preview with previous/next.</li>
         <li><strong>HQ Users</strong> — create Head Office / Super Admin logins.</li>
-        <li>Also: Area Managers, Dealers (all India), Visits, Posts &amp; Media, Reports (tables + charts), Audit logs, Settings.</li>
+        <li>Also: Territory Managers, Dealers (all India), Visits, Posts &amp; Media, Reports (tables + charts), Audit logs, Settings.</li>
       </ol>
     </section>
 
     <section class="card">
       <h2>5. Head Office Admin panel</h2>
       <ol>
-        <li>Dashboard: area managers, dealers, pending media, visits, state chart, visit trend.</li>
-        <li>Create and manage Area Managers and Dealers; assign a dealer to an AM (confirm first).</li>
+        <li>Dashboard: territory managers, dealers, pending media, visits, state chart, visit trend.</li>
+        <li>Create and manage Territory Managers and Dealers; assign a dealer to a TM (confirm first).</li>
         <li>Visits for the network. Media: HQ posts go live; they can also approve.</li>
         <li>Same dealer-poster inbox as Super Admin if they open Dealer posters.</li>
         <li>Reports export CSV. Delete actions always ask confirmation.</li>
@@ -120,13 +120,13 @@ Area Manager uploads Excel of dealers
     </section>
 
     <section class="card">
-      <h2>6. Area Manager panel</h2>
+      <h2>6. Territory Manager panel</h2>
       <ol>
-        <li><strong>My dealers</strong> — add/edit dealers in their area only.</li>
+        <li><strong>My dealers</strong> — add/edit dealers in their territory only.</li>
         <li><strong>Visits</strong> — record field visits.</li>
         <li><strong>Approve uploads</strong> — only dealer media from their dealers. Confirm before approve/reject.</li>
-        <li><strong>Excel &amp; posters</strong> — upload .xlsx / .xls / .csv (confirm). Super Admin parses it. When HQ sends posters back, they appear here for approval. AM never sees another area’s posters.</li>
-        <li>AM does not design posters and does not upload marketing posts (dealers upload; AM approves).</li>
+        <li><strong>Excel &amp; posters</strong> — upload .xlsx / .xls / .csv (confirm). Super Admin parses it. When HQ sends posters back, they appear here for approval. TM never sees another territory’s posters.</li>
+        <li>TM does not design posters and does not upload marketing posts (dealers upload; TM approves).</li>
       </ol>
       <div class="note">Excel tip: keep a header row with columns like Name, Address, Phone Number, Website. Extra title rows above the table are skipped.</div>
     </section>
@@ -134,10 +134,10 @@ Area Manager uploads Excel of dealers
     <section class="card">
       <h2>7. Dealer panel</h2>
       <ol>
-        <li>Dashboard: own stats, Area Manager contact, recent uploads and visits.</li>
+        <li>Dashboard: own stats, Territory Manager contact, recent uploads and visits.</li>
         <li>Profile: shop details.</li>
-        <li>Upload video/photo from shop, mela, demo — goes to AM as pending.</li>
-        <li>Approved posts: only live content. Visit history: AM visits to this dealer.</li>
+        <li>Upload video/photo from shop, mela, demo — goes to TM as pending.</li>
+        <li>Approved posts: only live content. Visit history: TM visits to this dealer.</li>
       </ol>
     </section>
 

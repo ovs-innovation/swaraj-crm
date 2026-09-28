@@ -15,7 +15,7 @@ export const canAccessDealer = async (user, dealerId) => {
 export const getHomePath = (role) => {
   if (role === 'super_admin') return '/super-admin';
   if (role === 'admin') return '/admin';
-  if (role === 'area_manager') return '/area-manager';
+  if (role === 'area_manager') return '/territory-manager';
   if (role === 'dealer') return '/dealer';
   return '/login';
 };

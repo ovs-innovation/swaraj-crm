@@ -29,7 +29,7 @@ const AreaManagerDashboard = () => {
           <h1>{t('dash.amTitle')}</h1>
           <p className="page-subtitle">{t('dash.amSub')}</p>
         </div>
-        <Link to="/area-manager/dealers" className="btn btn-primary">
+        <Link to="/territory-manager/dealers" className="btn btn-primary">
           <Plus size={16} /> {t('dash.addDealer')}
         </Link>
       </div>
@@ -58,7 +58,7 @@ const AreaManagerDashboard = () => {
         <div className="card">
           <div className="card-head">
             <h3 className="card-title">{t('dash.myDealers')}</h3>
-            <Link to="/area-manager/dealers" className="muted">{t('dash.viewAll')}</Link>
+            <Link to="/territory-manager/dealers" className="muted">{t('dash.viewAll')}</Link>
           </div>
           {myDealers?.length ? (
             <div className="table-wrapper">

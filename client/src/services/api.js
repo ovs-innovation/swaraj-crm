@@ -119,6 +119,7 @@ export const postersAPI = {
   sheets: () => api.get('/posters/sheets'),
   sheet: (id) => api.get(`/posters/sheets/${id}`),
   saveSheet: (id, data) => api.patch(`/posters/sheets/${id}`, data),
+  deleteSheet: (id) => api.delete(`/posters/sheets/${id}`),
   sendToAm: (sheetId) => api.post(`/posters/sheets/${sheetId}/send`),
   save: (formData) => api.post('/posters/save', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getAll: (params) => api.get('/posters', { params }),

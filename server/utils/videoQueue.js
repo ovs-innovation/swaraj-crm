@@ -80,7 +80,7 @@ export const processVideoJob = async (id) => {
       title: 'Review Required',
       body: 'A rendered video is waiting for your review.',
       type: 'review',
-      link: '/area-manager/videos',
+      link: '/territory-manager/videos',
       video: job._id,
     });
   } catch (err) {
