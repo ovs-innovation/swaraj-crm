@@ -276,11 +276,14 @@ const BulkPosters = () => {
             <div className="poster-live">
               {templateSrc ? <img src={templateSrc} alt="" /> : <div className="empty-state" style={{ minHeight: 220 }}>{t('posters.needTpl')}</div>}
               {templateSrc && (
-                <div className="poster-live-footer-strip">
-                  <div className="poster-strip-badge">
-                    <img src="/swaraj-logo.png" alt="Swaraj" className="poster-strip-logo" />
-                    <span className="poster-strip-dealer">{sampleVals.headerText || 'Dealer Name'}</span>
+                <>
+                  <div className="poster-top-logo-badge">
+                    <img src="/swaraj-logo.png" alt="Swaraj" />
                   </div>
+                  <div className="poster-live-footer-strip">
+                    <div className="poster-strip-badge">
+                      <span className="poster-strip-dealer">{sampleVals.headerText || 'Dealer Name'}</span>
+                    </div>
                   <div className="poster-strip-center">
                     <span className="poster-strip-icon pin">📍</span>
                     <div className="poster-strip-text">
@@ -296,8 +299,9 @@ const BulkPosters = () => {
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </>
+            )}
+          </div>
             <div className="poster-work-side">
               <label className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
                 {t('posters.changePic')}

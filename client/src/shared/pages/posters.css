@@ -275,27 +275,43 @@
   pointer-events: none;
 }
 
+.poster-top-logo-badge {
+  position: absolute;
+  top: 3.5%;
+  left: 3.5%;
+  background: #ffffff;
+  padding: 0.32rem 0.7rem;
+  border-radius: 7px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.poster-top-logo-badge img {
+  height: 26px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
 .poster-strip-badge {
   background: #ffffff;
   border-radius: 6px;
   border: 1.5px solid #BA0C2F;
-  padding: 0.25rem 0.55rem;
+  padding: 0.3rem 0.75rem;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  justify-content: center;
   flex-shrink: 0;
-  max-width: 38%;
+  max-width: 34%;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
 }
 
-.poster-strip-logo {
-  height: 22px;
-  width: auto;
-  object-fit: contain;
-}
-
 .poster-strip-dealer {
-  font-size: 0.85rem;
+  font-size: 0.92rem;
   font-weight: 800;
   color: #008744;
   white-space: nowrap;

@@ -131,12 +131,36 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded)
     // Continue if logo file not reachable
   }
 
+  // 1. Draw Green Swaraj Logo in Top-Left Area
+  if (swarajLogo) {
+    const logoAspect = swarajLogo.naturalWidth / swarajLogo.naturalHeight;
+    const topLogoW = Math.round(W * 0.16); // 16% of poster width
+    const topLogoH = Math.round(topLogoW / (logoAspect || 3.0));
+    const topLogoX = Math.round(W * 0.032);
+    const topLogoY = Math.round(H * 0.035);
+    const pad = Math.round(topLogoH * 0.16);
+
+    // Crisp white rounded badge
+    drawRoundedRect(
+      ctx,
+      topLogoX - pad,
+      topLogoY - pad,
+      topLogoW + pad * 2,
+      topLogoH + pad * 2,
+      Math.round((topLogoH + pad * 2) * 0.22),
+      '#ffffff',
+      'rgba(0, 0, 0, 0.12)',
+      Math.max(1, Math.round(W * 0.001))
+    );
+    ctx.drawImage(swarajLogo, topLogoX, topLogoY, topLogoW, topLogoH);
+  }
+
   // Modern Swaraj Bottom Brand Strip (no top blue band, no bottom black band)
   const stripH = Math.round(H * 0.088);
   const stripY = H - stripH;
   const footerBg = letterhead?.footerBg || '#BA0C2F'; // Official Swaraj Crimson Red
 
-  // 1. Draw solid red footer strip
+  // 2. Draw solid red footer strip
   ctx.fillStyle = footerBg;
   ctx.fillRect(0, stripY, W, stripH);
 
@@ -153,40 +177,21 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded)
   const phoneText = String(values.footerLeft || '').trim();
   const extraText = String(values.footerRight || '').trim();
 
-  // 2. Left White Badge (Swaraj Logo + Dealer Name)
-  const badgeW = Math.round(W * 0.32);
+  // 3. Left White Badge (Dealer Name in bold Swaraj Green)
+  const badgeW = Math.round(W * 0.30);
   const badgeX = padX;
   const badgeRadius = Math.round(innerH * 0.22);
   drawRoundedRect(ctx, badgeX, innerY, badgeW, innerH, badgeRadius, '#ffffff', '#BA0C2F', Math.max(1, Math.round(innerH * 0.035)));
 
-  let contentX = badgeX + Math.round(badgeW * 0.035);
-  if (swarajLogo) {
-    const logoAspect = swarajLogo.naturalWidth / swarajLogo.naturalHeight;
-    const logoH = Math.round(innerH * 0.72);
-    const logoW = Math.min(Math.round(logoH * logoAspect), Math.round(badgeW * 0.36));
-    const logoY = innerY + Math.round((innerH - logoH) / 2);
-    ctx.drawImage(swarajLogo, contentX, logoY, logoW, logoH);
-    contentX += logoW + Math.round(badgeW * 0.025);
-
-    // Subtle vertical divider inside badge
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = Math.max(1, Math.round(W * 0.001));
-    ctx.beginPath();
-    ctx.moveTo(contentX, innerY + innerH * 0.15);
-    ctx.lineTo(contentX, innerY + innerH * 0.85);
-    ctx.stroke();
-    contentX += Math.round(badgeW * 0.025);
-  }
-
-  // Dealer Name in bold Swaraj Green
-  const nameMaxW = (badgeX + badgeW) - contentX - Math.round(badgeW * 0.03);
-  const dealerFontSize = Math.round(innerH * 0.36);
+  const nameStartX = badgeX + Math.round(badgeW * 0.06);
+  const nameMaxW = badgeW - Math.round(badgeW * 0.12);
+  const dealerFontSize = Math.round(innerH * 0.44);
   ctx.font = `bold ${dealerFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
   ctx.fillStyle = '#008744';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   const fittedName = fitText(ctx, dealerName || 'Swaraj Dealer', nameMaxW);
-  ctx.fillText(fittedName, contentX, innerY + innerH / 2);
+  ctx.fillText(fittedName, nameStartX, innerY + innerH / 2);
 
   // 3. Center Section: 📍 Location Pin + Address / Branches
   const centerStartX = badgeX + badgeW + Math.round(W * 0.015);
