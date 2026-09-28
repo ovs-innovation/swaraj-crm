@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Upload, Check, X } from 'lucide-react';
+import { Upload, Check, X, Share2, Download } from 'lucide-react';
 import { mediaAPI, dealerAPI } from '../../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LanguageContext';
+import { mediaUrl } from '../../utils/mediaUrl';
 import MediaPreview from '../components/MediaPreview';
 import ConfirmDialog from '../components/ConfirmDialog';
 
@@ -106,6 +107,26 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
       danger: true,
       run: () => doDelete([id]),
     });
+  };
+
+  const handleShare = async (m) => {
+    const raw = mediaUrl(m.url);
+    const fullUrl = raw.startsWith('http') ? raw : `${window.location.origin}${raw}`;
+    const shareText = `${m.description || 'Swaraj CRM Post'}\n${fullUrl}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: m.description || 'Swaraj Post',
+          text: m.description || '',
+          url: fullUrl,
+        });
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
+    }
+    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+    window.open(waUrl, '_blank', 'noopener,noreferrer');
   };
 
   const title = adminMode
@@ -212,7 +233,29 @@ const MediaPage = ({ adminMode = false, approvalMode = false, dealerUploadMode =
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('media.by')}: {m.uploadedBy?.name}</p>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem', flexWrap: 'wrap', gap: '0.25rem' }}>
               <span className={`badge badge-${m.status}`}>{t(m.status)}</span>
-              <div style={{ display: 'flex', gap: '0.25rem' }}>
+              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                {m.url && (
+                  <>
+                    <a
+                      className="btn btn-sm btn-outline"
+                      href={mediaUrl(m.url)}
+                      download
+                      target="_blank"
+                      rel="noreferrer"
+                      title={t('video.download') || 'Download'}
+                    >
+                      <Download size={13} />
+                    </a>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline"
+                      onClick={() => handleShare(m)}
+                      title={t('share') || 'Share'}
+                    >
+                      <Share2 size={13} /> <span>{t('share') || 'Share'}</span>
+                    </button>
+                  </>
+                )}
                 {canApprove && m.status === 'pending' && (!approvalMode || m.uploadSource === 'dealer') && (
                   <>
                     <button className="btn btn-sm btn-primary" disabled={busyId === m._id} onClick={() => handleApprove(m._id, 'approved')} title="Approve"><Check size={14} /></button>
