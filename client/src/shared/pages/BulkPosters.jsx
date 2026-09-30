@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Trash2 } from 'lucide-react';
 import { postersAPI, settingsAPI } from '../../services/api';
 import { useLang } from '../context/LanguageContext';
-import { composePosterBlob, loadPosterImage, cellFromRow, guessPosterMapping } from '../../utils/composePoster';
+import { composePosterBlob, loadPosterImage, cellFromRow, guessPosterMapping, splitAddress } from '../../utils/composePoster';
 import { mediaUrl } from '../../utils/mediaUrl';
 import PosterLightbox from '../components/PosterLightbox';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -31,7 +31,25 @@ const BulkPosters = () => {
   const [ask, setAsk] = useState(null);
   const [progress, setProgress] = useState(null);
   const [design, setDesign] = useState(false);
-  const templateSrc = picture || (letterhead?.imageUrl ? mediaUrl(letterhead.imageUrl) : '');
+  const [aspectRatio, setAspectRatio] = useState('4:5');
+  const [showBrandBadges, setShowBrandBadges] = useState(true);
+  const [topLeftLogo, setTopLeftLogo] = useState('/swaraj-gold-seal.svg');
+  const [topRightLogo, setTopRightLogo] = useState('/swaraj-josh-badge.svg');
+  const [footerBg, setFooterBg] = useState('#BA0C2F');
+  const [dealerColor, setDealerColor] = useState('#00843D');
+  const [dealerBg, setDealerBg] = useState('#ffffff');
+  const [activeTab, setActiveTab] = useState('details');
+  const [showEditor, setShowEditor] = useState(true);
+  const [selectedRowIdx, setSelectedRowIdx] = useState(0);
+  const [customDefaults, setCustomDefaults] = useState({
+    headerText: 'Shree Motors',
+    headerSub: 'MI Road, Jaipur\nRajasthan - 302001',
+    footerLeft: '+91 91161 23451',
+    footerRight: 'www.swarajtractors.com',
+  });
+  const leftLogoInputRef = useRef(null);
+  const rightLogoInputRef = useRef(null);
+  const templateSrc = picture || (letterhead?.imageUrl ? mediaUrl(letterhead.imageUrl) : '/default-poster-template.jpg');
 
   const loadSheets = () => postersAPI.sheets().then((res) => setSheets(res.data.data || [])).catch((err) => setError(err.response?.data?.message || t('loadFail')));
   const loadPosters = (sheetId) => {
@@ -132,7 +150,15 @@ const BulkPosters = () => {
         };
         setProgress({ done: i + 1, total });
         await new Promise((r) => requestAnimationFrame(() => r()));
-        const blob = await composePosterBlob(src, lh, values, img);
+        const blob = await composePosterBlob(src, lh, values, img, {
+          aspectRatio,
+          showBrandBadges,
+          topLeftLogoSrc: topLeftLogo,
+          topRightLogoSrc: topRightLogo,
+          footerBg,
+          dealerColor,
+          dealerBg,
+        });
         fd.append('files', blob, `dealer-${i + 1}-8k.jpg`);
         fd.append('dealerName', values.headerText || `Dealer ${i + 1}`);
       }
@@ -173,12 +199,45 @@ const BulkPosters = () => {
 
   const headers = job?.headers || [];
   const rows = job?.rows || [];
-  const sample = rows[0];
+  const currentRow = rows[selectedRowIdx] || rows[0];
   const sampleVals = {
-    headerText: cellFromRow(sample, mapping.headerText),
-    headerSub: cellFromRow(sample, mapping.headerSub),
-    footerLeft: cellFromRow(sample, mapping.footerLeft),
-    footerRight: cellFromRow(sample, mapping.footerRight),
+    headerText: (currentRow && cellFromRow(currentRow, mapping.headerText)) || customDefaults.headerText,
+    headerSub: (currentRow && cellFromRow(currentRow, mapping.headerSub)) || customDefaults.headerSub,
+    footerLeft: (currentRow && cellFromRow(currentRow, mapping.footerLeft)) || customDefaults.footerLeft,
+    footerRight: (currentRow && cellFromRow(currentRow, mapping.footerRight)) || customDefaults.footerRight,
+  };
+  const { line1: sampleAddr1, line2: sampleAddr2 } = splitAddress(sampleVals.headerSub);
+
+  const updateCurrentVal = (fieldKey, val) => {
+    setCustomDefaults((prev) => ({ ...prev, [fieldKey]: val }));
+    let col = mapping[fieldKey];
+    if (!col) {
+      col = fieldKey;
+      setMapping((m) => ({ ...m, [fieldKey]: col }));
+    }
+    if (job?.rows?.length) {
+      const idx = selectedRowIdx || 0;
+      setJob((prev) => ({
+        ...prev,
+        rows: prev.rows.map((r, i) => (i === idx ? { ...r, [col]: val } : r)),
+      }));
+    }
+  };
+
+  const onLeftLogoFile = (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (f) {
+      setTopLeftLogo(URL.createObjectURL(f));
+    }
+  };
+
+  const onRightLogoFile = (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (f) {
+      setTopRightLogo(URL.createObjectURL(f));
+    }
   };
   const headerPct = letterhead?.headerPct ?? 16;
   const footerPct = letterhead?.footerPct ?? 11;
@@ -273,40 +332,380 @@ const BulkPosters = () => {
       {job && (
         <>
           <div className="card poster-work">
-            <div className="poster-live">
-              {templateSrc ? <img src={templateSrc} alt="" /> : <div className="empty-state" style={{ minHeight: 220 }}>{t('posters.needTpl')}</div>}
-              {templateSrc && (
-                <>
-                  <div className="poster-top-logo-badge">
-                    <img src="/swaraj-logo.png" alt="Swaraj" />
-                  </div>
-                  <div className="poster-live-footer-strip">
-                    <div className="poster-strip-badge">
-                      <span className="poster-strip-dealer">{sampleVals.headerText || 'Dealer Name'}</span>
-                    </div>
-                  <div className="poster-strip-center">
-                    <span className="poster-strip-icon pin">📍</span>
-                    <div className="poster-strip-text">
-                      <strong>{sampleVals.headerSub || 'Address Details'}</strong>
-                    </div>
-                  </div>
-                  <div className="poster-strip-divider" />
-                  <div className="poster-strip-right">
-                    <span className="poster-strip-icon phone">📞</span>
-                    <div className="poster-strip-text">
-                      <strong>{sampleVals.footerLeft || 'Contact Number'}</strong>
-                      {sampleVals.footerRight && <small>{sampleVals.footerRight}</small>}
-                    </div>
-                  </div>
+            <input ref={leftLogoInputRef} type="file" accept="image/*" hidden onChange={onLeftLogoFile} />
+            <input ref={rightLogoInputRef} type="file" accept="image/*" hidden onChange={onRightLogoFile} />
+
+            <div className="poster-stage-wrap">
+              <div className="poster-ratio-bar">
+                <div className="poster-ratio-btns">
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#475569', marginRight: 4 }}>
+                    {t('video.aspect') || 'Size'}:
+                  </span>
+                  <button
+                    type="button"
+                    className={`poster-ratio-btn ${aspectRatio === '4:5' ? 'active' : ''}`}
+                    onClick={() => setAspectRatio('4:5')}
+                    title="Official Swaraj Portrait Poster (1080x1350 / 4:5)"
+                  >
+                    📱 4:5 Portrait
+                  </button>
+                  <button
+                    type="button"
+                    className={`poster-ratio-btn ${aspectRatio === '1:1' ? 'active' : ''}`}
+                    onClick={() => setAspectRatio('1:1')}
+                    title="Square 1:1 (WhatsApp & Social Post)"
+                  >
+                    ⏹️ 1:1 Square
+                  </button>
+                  <button
+                    type="button"
+                    className={`poster-ratio-btn ${aspectRatio === 'original' ? 'active' : ''}`}
+                    onClick={() => setAspectRatio('original')}
+                    title="Keep Original Image Ratio"
+                  >
+                    🖼️ Original
+                  </button>
                 </div>
-              </>
-            )}
-          </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <button
+                    type="button"
+                    className={`poster-ratio-btn ${showEditor ? 'active' : ''}`}
+                    onClick={() => setShowEditor(!showEditor)}
+                  >
+                    ✏️ {showEditor ? 'Hide Edit Panel' : 'Edit Details & Logos'}
+                  </button>
+                  <label className="poster-badge-toggle">
+                    <input
+                      type="checkbox"
+                      checked={showBrandBadges}
+                      onChange={(e) => setShowBrandBadges(e.target.checked)}
+                    />
+                    <span>Show Badges</span>
+                  </label>
+                </div>
+              </div>
+
+              {showEditor && (
+                <div className="poster-quick-editor">
+                  <div className="poster-quick-tabs">
+                    <button
+                      type="button"
+                      className={`poster-quick-tab ${activeTab === 'details' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('details')}
+                    >
+                      📝 Edit Details (Name, Address, Contact)
+                    </button>
+                    <button
+                      type="button"
+                      className={`poster-quick-tab ${activeTab === 'branding' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('branding')}
+                    >
+                      🎨 Change Logos & Colors
+                    </button>
+                  </div>
+
+                  {activeTab === 'details' && (
+                    <div className="poster-editor-grid">
+                      {rows.length > 1 && (
+                        <div className="form-group full-width">
+                          <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                            Select Dealer from Excel ({rows.length} dealers):
+                          </label>
+                          <select
+                            value={selectedRowIdx}
+                            onChange={(e) => setSelectedRowIdx(Number(e.target.value))}
+                            style={{ width: '100%', padding: '0.45rem 0.65rem', borderRadius: 6, border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
+                          >
+                            {rows.map((r, i) => (
+                              <option key={i} value={i}>
+                                Dealer {i + 1}: {cellFromRow(r, mapping.headerText) || `Row ${i + 1}`}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                          Dealer / Firm Name
+                        </label>
+                        <input
+                          type="text"
+                          className="poster-edit-input"
+                          value={sampleVals.headerText}
+                          onChange={(e) => updateCurrentVal('headerText', e.target.value)}
+                          placeholder="e.g. Shree Motors / मॉडल एजन्सीज"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                          Address & Branches
+                        </label>
+                        <input
+                          type="text"
+                          className="poster-edit-input"
+                          value={sampleVals.headerSub}
+                          onChange={(e) => updateCurrentVal('headerSub', e.target.value)}
+                          placeholder="e.g. MI Road, Jaipur, Rajasthan - 302001"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                          Contact Number 1
+                        </label>
+                        <input
+                          type="text"
+                          className="poster-edit-input"
+                          value={sampleVals.footerLeft}
+                          onChange={(e) => updateCurrentVal('footerLeft', e.target.value)}
+                          placeholder="e.g. +91 91161 23451"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                          Contact 2 / Website
+                        </label>
+                        <input
+                          type="text"
+                          className="poster-edit-input"
+                          value={sampleVals.footerRight}
+                          onChange={(e) => updateCurrentVal('footerRight', e.target.value)}
+                          placeholder="e.g. +91 77750 00051 or www.swarajtractors.com"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'branding' && (
+                    <div className="poster-editor-grid">
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                          Top-Left Logo:
+                        </label>
+                        <div className="poster-logo-picker-row">
+                          <button
+                            type="button"
+                            className={`poster-pill-btn ${topLeftLogo === '/swaraj-gold-seal.svg' ? 'active' : ''}`}
+                            onClick={() => setTopLeftLogo('/swaraj-gold-seal.svg')}
+                          >
+                            🌟 Gold Seal
+                          </button>
+                          <button
+                            type="button"
+                            className={`poster-pill-btn ${topLeftLogo === '/swaraj-logo.png' ? 'active' : ''}`}
+                            onClick={() => setTopLeftLogo('/swaraj-logo.png')}
+                          >
+                            🏷️ Swaraj
+                          </button>
+                          <button
+                            type="button"
+                            className={`poster-pill-btn ${topLeftLogo && !['/swaraj-gold-seal.svg', '/swaraj-logo.png'].includes(topLeftLogo) ? 'active' : ''}`}
+                            onClick={() => leftLogoInputRef.current?.click()}
+                          >
+                            📁 Upload Logo...
+                          </button>
+                          <button
+                            type="button"
+                            className={`poster-pill-btn ${!topLeftLogo ? 'active' : ''}`}
+                            onClick={() => setTopLeftLogo(null)}
+                          >
+                            ❌ None
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                          Top-Right Logo:
+                        </label>
+                        <div className="poster-logo-picker-row">
+                          <button
+                            type="button"
+                            className={`poster-pill-btn ${topRightLogo === '/swaraj-josh-badge.svg' ? 'active' : ''}`}
+                            onClick={() => setTopRightLogo('/swaraj-josh-badge.svg')}
+                          >
+                            ⚡ Josh Ka Raaz
+                          </button>
+                          <button
+                            type="button"
+                            className={`poster-pill-btn ${topRightLogo === '/swaraj-logo.png' ? 'active' : ''}`}
+                            onClick={() => setTopRightLogo('/swaraj-logo.png')}
+                          >
+                            🏷️ Swaraj
+                          </button>
+                          <button
+                            type="button"
+                            className={`poster-pill-btn ${topRightLogo && !['/swaraj-josh-badge.svg', '/swaraj-logo.png'].includes(topRightLogo) ? 'active' : ''}`}
+                            onClick={() => rightLogoInputRef.current?.click()}
+                          >
+                            📁 Upload Logo...
+                          </button>
+                          <button
+                            type="button"
+                            className={`poster-pill-btn ${!topRightLogo ? 'active' : ''}`}
+                            onClick={() => setTopRightLogo(null)}
+                          >
+                            ❌ None
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                          Footer Bar Color:
+                        </label>
+                        <div className="poster-color-swatches">
+                          {['#BA0C2F', '#800020', '#003A70', '#18181B'].map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              className={`poster-swatch ${footerBg === c ? 'active' : ''}`}
+                              style={{ background: c }}
+                              onClick={() => setFooterBg(c)}
+                            />
+                          ))}
+                          <input
+                            type="color"
+                            value={footerBg}
+                            onChange={(e) => setFooterBg(e.target.value)}
+                            title="Custom Footer Color"
+                            className="poster-color-picker-input"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
+                          Dealer Name Text Color:
+                        </label>
+                        <div className="poster-color-swatches">
+                          {['#00843D', '#BA0C2F', '#C8963E', '#0F172A'].map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              className={`poster-swatch ${dealerColor === c ? 'active' : ''}`}
+                              style={{ background: c }}
+                              onClick={() => setDealerColor(c)}
+                            />
+                          ))}
+                          <input
+                            type="color"
+                            value={dealerColor}
+                            onChange={(e) => setDealerColor(e.target.value)}
+                            title="Custom Dealer Name Color"
+                            className="poster-color-picker-input"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="poster-preview-stage">
+                <div className={`poster-live aspect-${aspectRatio === '4:5' ? 'portrait' : aspectRatio === '1:1' ? 'square' : 'original'}`}>
+                  {templateSrc ? (
+                    <img className="poster-bg-img" src={templateSrc} alt="Poster Template" />
+                  ) : (
+                    <div className="empty-state" style={{ minHeight: 220 }}>{t('posters.needTpl')}</div>
+                  )}
+
+                  {templateSrc && (
+                    <>
+                      {showBrandBadges && (
+                        <>
+                          {topLeftLogo && (
+                            <div
+                              className="poster-top-seal-badge interactive"
+                              title="Click to replace top-left logo"
+                              onClick={() => leftLogoInputRef.current?.click()}
+                            >
+                              <img src={topLeftLogo} alt="Top-Left Logo" />
+                              <span className="poster-badge-hover-hint">Change Logo</span>
+                            </div>
+                          )}
+                          {topRightLogo && (
+                            <div
+                              className="poster-top-josh-badge interactive"
+                              title="Click to replace top-right logo"
+                              onClick={() => rightLogoInputRef.current?.click()}
+                            >
+                              <img src={topRightLogo} alt="Top-Right Logo" />
+                              <span className="poster-badge-hover-hint">Change Logo</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      <div
+                        className="poster-live-footer-strip"
+                        style={{ background: footerBg }}
+                      >
+                        <div
+                          className="poster-strip-badge"
+                          style={{ background: dealerBg }}
+                          title="Click to edit dealer name"
+                          onClick={() => { setShowEditor(true); setActiveTab('details'); }}
+                        >
+                          <span className="poster-strip-dealer" style={{ color: dealerColor }}>
+                            {sampleVals.headerText}
+                          </span>
+                        </div>
+                        <div
+                          className="poster-strip-center"
+                          title="Click to edit address"
+                          onClick={() => { setShowEditor(true); setActiveTab('details'); }}
+                        >
+                          <span className="poster-strip-circle-icon">
+                            <svg viewBox="0 0 24 24" style={{ fill: footerBg }}>
+                              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/>
+                            </svg>
+                          </span>
+                          <div className="poster-strip-text">
+                            <strong className="addr-line1">{sampleAddr1}</strong>
+                            {sampleAddr2 && <span className="addr-line2">{sampleAddr2}</span>}
+                          </div>
+                        </div>
+                        <div className="poster-strip-divider" />
+                        <div
+                          className="poster-strip-right"
+                          title="Click to edit contact numbers"
+                          onClick={() => { setShowEditor(true); setActiveTab('details'); }}
+                        >
+                          <span className="poster-strip-circle-icon">
+                            <svg viewBox="0 0 24 24" style={{ fill: footerBg }}>
+                              <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2z"/>
+                            </svg>
+                          </span>
+                          <div className="poster-strip-text">
+                            <strong className="phone-line1">{sampleVals.footerLeft}</strong>
+                            {sampleVals.footerRight && <strong className="phone-line2">{sampleVals.footerRight}</strong>}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="poster-work-side">
               <label className="btn btn-outline" style={{ width: '100%', justifyContent: 'center' }}>
                 {t('posters.changePic')}
                 <input type="file" accept="image/*" hidden onChange={onPicture} />
               </label>
+              <button
+                type="button"
+                className="btn btn-outline"
+                style={{ width: '100%', justifyContent: 'center' }}
+                onClick={() => setPicture('/default-poster-template.jpg')}
+              >
+                🌾 Festive Template
+              </button>
               <button type="button" className="btn btn-outline" onClick={() => setDesign(true)}>{t('posters.editMain')}</button>
               <button type="button" className="btn btn-primary" disabled={busy} onClick={() => generate()}>
                 {t('posters.makeFromExcel')}

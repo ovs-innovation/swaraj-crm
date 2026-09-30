@@ -82,6 +82,39 @@ const fitText = (ctx, text, maxWidth) => {
   return str + '...';
 };
 
+export const splitAddress = (addressText) => {
+  const raw = String(addressText || '').trim();
+  if (!raw) return { line1: '', line2: '' };
+
+  if (raw.includes('\n')) {
+    const parts = raw.split('\n').map((s) => s.trim()).filter(Boolean);
+    return { line1: parts[0] || '', line2: parts.slice(1).join(' ') };
+  }
+
+  const branchMatch = raw.search(/शाखा|branch|branches|tehsil|तहसील|dist|district|near|opp/i);
+  if (branchMatch > 4) {
+    const l1 = raw.slice(0, branchMatch).replace(/[, -]+$/, '').trim();
+    const l2 = raw.slice(branchMatch).trim();
+    if (l1 && l2) return { line1: l1, line2: l2 };
+  }
+
+  const commaParts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (commaParts.length >= 2) {
+    const half = Math.ceil(commaParts.length / 2);
+    const l1 = commaParts.slice(0, half).join(', ');
+    const l2 = commaParts.slice(half).join(', ');
+    return { line1: l1, line2: l2 };
+  }
+
+  const words = raw.split(/\s+/).filter(Boolean);
+  if (words.length > 5) {
+    const half = Math.ceil(words.length / 2);
+    return { line1: words.slice(0, half).join(' '), line2: words.slice(half).join(' ') };
+  }
+
+  return { line1: raw, line2: '' };
+};
+
 const drawIconCircle = (ctx, cx, cy, r, type) => {
   ctx.save();
   ctx.fillStyle = '#ffffff';
@@ -91,128 +124,152 @@ const drawIconCircle = (ctx, cx, cy, r, type) => {
 
   if (type === 'pin') {
     ctx.fillStyle = '#BA0C2F';
-    const pinR = r * 0.45;
-    const pinY = cy - r * 0.15;
+    const pinR = r * 0.44;
+    const pinCY = cy - r * 0.14;
     ctx.beginPath();
-    ctx.arc(cx, pinY, pinR, Math.PI, 0, false);
-    ctx.lineTo(cx, cy + r * 0.55);
+    ctx.arc(cx, pinCY, pinR, Math.PI * 0.9, Math.PI * 0.1, false);
+    ctx.lineTo(cx, cy + r * 0.58);
     ctx.closePath();
     ctx.fill();
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(cx, pinY, pinR * 0.45, 0, Math.PI * 2);
+    ctx.arc(cx, pinCY, pinR * 0.42, 0, Math.PI * 2);
     ctx.fill();
   } else if (type === 'phone') {
     ctx.fillStyle = '#BA0C2F';
-    ctx.font = `bold ${Math.round(r * 1.1)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('📞', cx, cy);
+    ctx.translate(cx, cy);
+    const s = (r * 1.05) / 24;
+    ctx.scale(s, s);
+    const p = new Path2D(
+      'M-7.8,-6.2 C-8.2,-5.8 -8.4,-5.2 -8.4,-4.6 C-8.4,1.8 -3.2,7.0 3.2,7.0 C3.8,7.0 4.4,6.8 4.8,6.4 L6.3,4.9 C6.8,4.4 6.8,3.6 6.3,3.1 L3.9,0.7 C3.4,0.2 2.6,0.2 2.1,0.7 L1.1,1.7 C-0.5,0.7 -1.8,-0.6 -2.8,-2.2 L-1.8,-3.2 C-1.3,-3.7 -1.3,-4.5 -1.8,-5.0 L-4.2,-7.4 C-4.7,-7.9 -5.5,-7.9 -6.0,-7.4 Z'
+    );
+    ctx.fill(p);
   }
   ctx.restore();
 };
 
-export const composePosterBlob = async (imageSrc, letterhead, values, preloaded) => {
+export const composePosterBlob = async (imageSrc, letterhead, values, preloaded, options = {}) => {
   await document.fonts.ready;
   const img = preloaded || (await loadPosterImage(imageSrc));
-  const { W, H } = sizeTo8k(img.naturalWidth, img.naturalHeight);
+  const aspectMode = options.aspectRatio || letterhead?.aspectRatio || '4:5';
+
+  let W, H;
+  if (aspectMode === '4:5') {
+    W = 2160;
+    H = 2700;
+  } else if (aspectMode === '1:1') {
+    W = 2160;
+    H = 2160;
+  } else {
+    const s = sizeTo8k(img.naturalWidth, img.naturalHeight);
+    W = s.W;
+    H = s.H;
+  }
+
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext('2d', { alpha: false });
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(img, 0, 0, W, H);
 
-  let swarajLogo = null;
-  try {
-    swarajLogo = await loadPosterImage('/swaraj-logo.png');
-  } catch {
-    // Continue if logo file not reachable
+  // Draw background image with center-cover cropping
+  const targetAspect = W / H;
+  const imgAspect = (img.naturalWidth || W) / (img.naturalHeight || H);
+  let sx = 0, sy = 0, sWidth = img.naturalWidth, sHeight = img.naturalHeight;
+  if (imgAspect > targetAspect) {
+    sWidth = img.naturalHeight * targetAspect;
+    sx = (img.naturalWidth - sWidth) / 2;
+  } else if (imgAspect < targetAspect) {
+    sHeight = img.naturalWidth / targetAspect;
+    sy = (img.naturalHeight - sHeight) / 2;
+  }
+  ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, W, H);
+
+  // 1. Draw Top-Left & Top-Right Brand Badges / Custom Logos
+  if (options.showBrandBadges !== false) {
+    const leftLogo = options.topLeftLogoSrc !== undefined ? options.topLeftLogoSrc : '/swaraj-gold-seal.svg';
+    const rightLogo = options.topRightLogoSrc !== undefined ? options.topRightLogoSrc : '/swaraj-josh-badge.svg';
+
+    if (leftLogo && leftLogo !== 'none') {
+      try {
+        const sealImg = await loadPosterImage(leftLogo);
+        const aspect = (sealImg.naturalWidth && sealImg.naturalHeight) ? (sealImg.naturalWidth / sealImg.naturalHeight) : 1;
+        const sealW = Math.round(W * 0.165);
+        const sealH = Math.round(sealW / aspect);
+        const sealX = Math.round(W * 0.04);
+        const sealY = Math.round(H * 0.032);
+        ctx.drawImage(sealImg, sealX, sealY, sealW, sealH);
+      } catch (err) {
+        console.warn('Could not draw left logo:', err);
+      }
+    }
+
+    if (rightLogo && rightLogo !== 'none') {
+      try {
+        const joshImg = await loadPosterImage(rightLogo);
+        const aspect = (joshImg.naturalWidth && joshImg.naturalHeight) ? (joshImg.naturalWidth / joshImg.naturalHeight) : (320 / 180);
+        const joshW = Math.round(W * 0.23);
+        const joshH = Math.round(joshW / aspect);
+        const joshX = W - joshW - Math.round(W * 0.04);
+        const joshY = Math.round(H * 0.032);
+        ctx.drawImage(joshImg, joshX, joshY, joshW, joshH);
+      } catch (err) {
+        console.warn('Could not draw right logo:', err);
+      }
+    }
   }
 
-  // 1. Draw Green Swaraj Logo in Top-Left Area
-  if (swarajLogo) {
-    const logoAspect = swarajLogo.naturalWidth / swarajLogo.naturalHeight;
-    const topLogoW = Math.round(W * 0.16); // 16% of poster width
-    const topLogoH = Math.round(topLogoW / (logoAspect || 3.0));
-    const topLogoX = Math.round(W * 0.032);
-    const topLogoY = Math.round(H * 0.035);
-    const pad = Math.round(topLogoH * 0.16);
-
-    // Crisp white rounded badge
-    drawRoundedRect(
-      ctx,
-      topLogoX - pad,
-      topLogoY - pad,
-      topLogoW + pad * 2,
-      topLogoH + pad * 2,
-      Math.round((topLogoH + pad * 2) * 0.22),
-      '#ffffff',
-      'rgba(0, 0, 0, 0.12)',
-      Math.max(1, Math.round(W * 0.001))
-    );
-    ctx.drawImage(swarajLogo, topLogoX, topLogoY, topLogoW, topLogoH);
-  }
-
-  // Modern Swaraj Bottom Brand Strip (no top blue band, no bottom black band)
-  const stripH = Math.round(H * 0.088);
+  // 2. Swaraj Official Dealership Footer Strip
+  const stripH = Math.round(H * 0.076);
   const stripY = H - stripH;
-  const footerBg = letterhead?.footerBg || '#BA0C2F'; // Official Swaraj Crimson Red
+  const footerBg = options.footerBg || letterhead?.footerBg || '#BA0C2F'; // Official Swaraj Crimson Red
+  const dealerColor = options.dealerColor || '#00843D';
+  const dealerBg = options.dealerBg || '#ffffff';
 
-  // 2. Draw solid red footer strip
   ctx.fillStyle = footerBg;
   ctx.fillRect(0, stripY, W, stripH);
 
-  // Top accent line
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-  ctx.fillRect(0, stripY, W, Math.max(2, Math.round(H * 0.0025)));
+  // Subtle top accent line
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.fillRect(0, stripY, W, Math.max(1, Math.round(H * 0.0012)));
 
-  const padX = Math.round(W * 0.016);
+  const padX = Math.round(W * 0.018);
   const innerH = Math.round(stripH * 0.76);
   const innerY = Math.round(stripY + (stripH - innerH) / 2);
 
-  const dealerName = String(values.headerText || '').trim();
-  const addressText = String(values.headerSub || '').trim();
-  const phoneText = String(values.footerLeft || '').trim();
-  const extraText = String(values.footerRight || '').trim();
+  const dealerName = String(values?.headerText || '').trim() || 'मॉडल एजन्सीज';
+  const addressText = String(values?.headerSub || '').trim() || 'एन. एच. 6 बेला, भंडारा- 441906\nशाखा-तुमसर, साकोली, आसगाव, लाखांदूर';
+  const phoneText = String(values?.footerLeft || '').trim() || '+91 80075 48833';
+  const extraText = String(values?.footerRight || '').trim() || '+91 77750 00051';
 
-  // 3. Left White Badge (Dealer Name in bold Swaraj Green)
-  const badgeW = Math.round(W * 0.30);
+  // 3. Left Section: Crisp Card with Dealer Name
+  const badgeW = Math.round(W * 0.28);
   const badgeX = padX;
-  const badgeRadius = Math.round(innerH * 0.22);
-  drawRoundedRect(ctx, badgeX, innerY, badgeW, innerH, badgeRadius, '#ffffff', '#BA0C2F', Math.max(1, Math.round(innerH * 0.035)));
+  const badgeRadius = Math.round(innerH * 0.12);
+  drawRoundedRect(ctx, badgeX, innerY, badgeW, innerH, badgeRadius, dealerBg, null, 0);
 
-  const nameStartX = badgeX + Math.round(badgeW * 0.06);
-  const nameMaxW = badgeW - Math.round(badgeW * 0.12);
   const dealerFontSize = Math.round(innerH * 0.44);
   ctx.font = `bold ${dealerFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-  ctx.fillStyle = '#008744';
-  ctx.textAlign = 'left';
+  ctx.fillStyle = dealerColor;
+  ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const fittedName = fitText(ctx, dealerName || 'Swaraj Dealer', nameMaxW);
-  ctx.fillText(fittedName, nameStartX, innerY + innerH / 2);
+  const fittedName = fitText(ctx, dealerName, badgeW - Math.round(badgeW * 0.08));
+  ctx.fillText(fittedName, badgeX + badgeW / 2, innerY + innerH / 2);
 
-  // 3. Center Section: 📍 Location Pin + Address / Branches
-  const centerStartX = badgeX + badgeW + Math.round(W * 0.015);
-  const centerEndX = Math.round(W * 0.74);
-  const iconR = Math.round(innerH * 0.22);
+  // 4. Middle Section: Location Icon + 2-Line Address
+  const centerStartX = badgeX + badgeW + Math.round(W * 0.016);
+  const divX = W - Math.round(W * 0.27);
+  const iconR = Math.round(innerH * 0.24);
   const iconCY = stripY + stripH / 2;
   const pinCX = centerStartX + iconR;
   drawIconCircle(ctx, pinCX, iconCY, iconR, 'pin');
 
-  const addrStartX = pinCX + iconR + Math.round(W * 0.008);
-  const addrMaxW = centerEndX - addrStartX;
+  const addrStartX = pinCX + iconR + Math.round(W * 0.01);
+  const addrMaxW = divX - addrStartX - Math.round(W * 0.014);
   const addrFontSize = Math.round(innerH * 0.22);
 
-  const rawWords = addressText.split(/\s+/).filter(Boolean);
-  let line1 = addressText;
-  let line2 = '';
-  if (rawWords.length > 5 || ctx.measureText(addressText).width > addrMaxW) {
-    const half = Math.ceil(rawWords.length / 2);
-    line1 = rawWords.slice(0, half).join(' ');
-    line2 = rawWords.slice(half).join(' ');
-  }
+  const { line1, line2 } = splitAddress(addressText);
 
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'left';
@@ -220,39 +277,35 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded)
   if (line2) {
     ctx.font = `bold ${addrFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, line1, addrMaxW), addrStartX, iconCY - addrFontSize * 0.65);
-    ctx.font = `400 ${Math.round(addrFontSize * 0.88)}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.font = `500 ${Math.round(addrFontSize * 0.88)}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, line2, addrMaxW), addrStartX, iconCY + addrFontSize * 0.65);
   } else {
     ctx.font = `600 ${addrFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, line1, addrMaxW), addrStartX, iconCY);
   }
 
-  // Vertical divider before contact
-  const divX = centerEndX + Math.round(W * 0.012);
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-  ctx.lineWidth = Math.max(1, Math.round(W * 0.0015));
+  // 5. Vertical Divider
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+  ctx.lineWidth = Math.max(1.5, Math.round(W * 0.0012));
   ctx.beginPath();
   ctx.moveTo(divX, innerY + innerH * 0.12);
   ctx.lineTo(divX, innerY + innerH * 0.88);
   ctx.stroke();
 
-  // 4. Right Section: 📞 Phone + Contacts
+  // 6. Right Section: Phone Icon + 2-Line Contact Numbers
   const rightStartX = divX + Math.round(W * 0.015);
   const phoneCX = rightStartX + iconR;
   drawIconCircle(ctx, phoneCX, iconCY, iconR, 'phone');
 
-  const phoneStartX = phoneCX + iconR + Math.round(W * 0.008);
+  const phoneStartX = phoneCX + iconR + Math.round(W * 0.01);
   const phoneMaxW = (W - padX) - phoneStartX;
   const phoneFontSize = Math.round(innerH * 0.22);
 
-  ctx.fillStyle = '#ffffff';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
   if (extraText) {
     ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY - phoneFontSize * 0.65);
-    ctx.font = `500 ${Math.round(phoneFontSize * 0.88)}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    ctx.fillText(fitText(ctx, extraText, phoneMaxW), phoneStartX, iconCY + phoneFontSize * 0.65);
+    ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY - phoneFontSize * 0.62);
+    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.fillText(fitText(ctx, extraText, phoneMaxW), phoneStartX, iconCY + phoneFontSize * 0.62);
   } else {
     ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY);
