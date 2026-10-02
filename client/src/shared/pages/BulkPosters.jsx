@@ -138,8 +138,11 @@ const BulkPosters = () => {
       await postersAPI.saveSheet(job._id, { rows: job.rows, mapping });
       if (posters.length) await postersAPI.bulkDelete({ all: true, sheetId: job._id });
       const img = await loadPosterImage(src);
-      const fd = new FormData();
-      fd.append('sheetId', job._id);
+      const BATCH_SIZE = 20;
+      let currentFd = new FormData();
+      currentFd.append('sheetId', job._id);
+      let batchCount = 0;
+
       for (let i = 0; i < total; i += 1) {
         const row = job.rows[i];
         const values = {
@@ -159,10 +162,17 @@ const BulkPosters = () => {
           dealerColor,
           dealerBg,
         });
-        fd.append('files', blob, `dealer-${i + 1}-8k.jpg`);
-        fd.append('dealerName', values.headerText || `Dealer ${i + 1}`);
+        currentFd.append('files', blob, `dealer-${i + 1}-8k.jpg`);
+        currentFd.append('dealerName', values.headerText || `Dealer ${i + 1}`);
+        batchCount += 1;
+
+        if (batchCount >= BATCH_SIZE || i === total - 1) {
+          await postersAPI.save(currentFd);
+          currentFd = new FormData();
+          currentFd.append('sheetId', job._id);
+          batchCount = 0;
+        }
       }
-      await postersAPI.save(fd);
       setMsg(t('posters.doneExcel').replace('{n}', String(total)));
       loadSheets();
       loadPosters(job._id);

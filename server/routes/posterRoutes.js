@@ -13,7 +13,7 @@ router.get('/sheets/:id', authorize('super_admin', 'area_manager'), getSheet);
 router.patch('/sheets/:id', authorize('super_admin'), updateSheet);
 router.delete('/sheets/:id', authorize('super_admin', 'area_manager'), deleteSheet);
 router.post('/sheets/:id/send', authorize('super_admin'), sendToAreaManager);
-router.post('/save', authorize('super_admin'), upload.array('files', 80), savePosters);
+router.post('/save', authorize('super_admin'), upload.array('files', 500), savePosters);
 router.post('/bulk-delete', authorize('super_admin'), bulkDeletePosters);
 router.get('/', authorize('super_admin', 'area_manager'), getPosters);
 router.patch('/:id/review', authorize('super_admin', 'area_manager'), reviewPoster);

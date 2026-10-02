@@ -6,7 +6,7 @@ import SheetJob from '../models/SheetJob.js';
 import Dealer from '../models/Dealer.js';
 import { asyncHandler } from '../utils/helpers.js';
 import { parseDealerSheet } from '../utils/parseDealerSheet.js';
-import { attachCloudUrl, toPublicUrl } from '../utils/cloudinary.js';
+import { attachCloudUrl, toPublicUrl, localFileMeta, isCloudinaryReady, uploadLocalFile } from '../utils/cloudinary.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -93,38 +93,64 @@ export const savePosters = asyncHandler(async (req, res) => {
   }
   const job = await SheetJob.findById(req.body.sheetId);
   if (!job) return res.status(404).json({ success: false, message: 'Sheet not found' });
-  const areaManagerId = job.areaManager;
+  const areaManagerId = job.areaManager?._id || job.areaManager;
   const files = req.files || [];
   if (!files.length) return res.status(400).json({ success: false, message: 'No pictures generated' });
 
+  // Pre-fetch all dealers for this area manager to avoid 40+ database roundtrips
+  const allDealers = await Dealer.find({ areaManager: areaManagerId }).select('_id dealerName dealerCode').lean();
   const names = [].concat(req.body.dealerName || []);
   const created = [];
+
   for (let i = 0; i < files.length; i += 1) {
     const name = String(names[i] || '').trim();
     let dealer = null;
     if (name) {
-      const safe = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      dealer = await Dealer.findOne({
-        areaManager: areaManagerId,
-        $or: [{ dealerName: new RegExp(`^${safe}$`, 'i') }, { dealerCode: new RegExp(`^${safe}$`, 'i') }],
-      }).select('_id dealerName');
+      const norm = name.toLowerCase();
+      dealer = allDealers.find(
+        (d) =>
+          (d.dealerName && d.dealerName.toLowerCase() === norm) ||
+          (d.dealerCode && d.dealerCode.toLowerCase() === norm)
+      );
     }
-    const stored = await attachCloudUrl(files[i], 'swaraj-crm/posters');
-    created.push(
-      await Poster.create({
-        areaManager: areaManagerId,
-        sheet: job._id,
-        dealer: dealer?._id,
-        dealerName: dealer?.dealerName || name || `Dealer ${i + 1}`,
-        url: stored.url,
-        status: 'draft',
-        createdBy: req.user._id,
-      })
-    );
+    const local = localFileMeta(files[i]);
+    const poster = await Poster.create({
+      areaManager: areaManagerId,
+      sheet: job._id,
+      dealer: dealer?._id,
+      dealerName: dealer?.dealerName || name || `Dealer ${i + 1}`,
+      url: local.url,
+      status: 'draft',
+      createdBy: req.user._id,
+    });
+    created.push(poster);
   }
+
   job.status = 'generated';
   await job.save();
+
+  // Respond immediately so Vite proxy / browser never times out or throws 500
   res.json({ success: true, data: created });
+
+  // Non-blocking background sync to Cloudinary
+  if (isCloudinaryReady()) {
+    setImmediate(async () => {
+      for (let i = 0; i < created.length; i += 1) {
+        try {
+          const file = files[i];
+          const poster = created[i];
+          if (file?.path && fs.existsSync(file.path)) {
+            const up = await uploadLocalFile(file.path, { folder: 'swaraj-crm/posters', mime: file.mimetype });
+            if (up?.url) {
+              await Poster.findByIdAndUpdate(poster._id, { url: up.url });
+            }
+          }
+        } catch (err) {
+          console.error(`Background Cloudinary upload error for poster ${created[i]._id}:`, err.message);
+        }
+      }
+    });
+  }
 });
 
 export const sendToAreaManager = asyncHandler(async (req, res) => {
