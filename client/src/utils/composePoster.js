@@ -167,7 +167,7 @@ const fitText = (ctx, text, maxWidth) => {
 };
 
 export const splitAddress = (addressText) => {
-  const raw = String(addressText || '').trim();
+  const raw = String(addressText || '').trim().replace(/\s+/g, ' ');
   if (!raw) return { line1: '', line2: '' };
 
   if (raw.includes('\n')) {
@@ -175,28 +175,29 @@ export const splitAddress = (addressText) => {
     return { line1: parts[0] || '', line2: parts.slice(1).join(' ') };
   }
 
-  const branchMatch = raw.search(/शाखा|branch|branches|tehsil|तहसील|dist|district|near|opp/i);
-  if (branchMatch > 4) {
-    const l1 = raw.slice(0, branchMatch).replace(/[, -]+$/, '').trim();
-    const l2 = raw.slice(branchMatch).trim();
-    if (l1 && l2) return { line1: l1, line2: l2 };
+  const words = raw.split(' ').filter(Boolean);
+  if (words.length <= 3 && raw.length <= 22) {
+    return { line1: raw, line2: '' };
   }
 
-  const commaParts = raw.split(',').map((s) => s.trim()).filter(Boolean);
-  if (commaParts.length >= 2) {
-    const half = Math.ceil(commaParts.length / 2);
-    const l1 = commaParts.slice(0, half).join(', ');
-    const l2 = commaParts.slice(half).join(', ');
-    return { line1: l1, line2: l2 };
+  // Split into 2 balanced lines by words nearest the midpoint length
+  const targetHalf = Math.floor(raw.length / 2);
+  let bestIdx = 1;
+  let minDiff = Infinity;
+  let curLen = 0;
+
+  for (let i = 0; i < words.length - 1; i += 1) {
+    curLen += words[i].length + (i > 0 ? 1 : 0);
+    const diff = Math.abs(curLen - targetHalf);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestIdx = i + 1;
+    }
   }
 
-  const words = raw.split(/\s+/).filter(Boolean);
-  if (words.length > 5) {
-    const half = Math.ceil(words.length / 2);
-    return { line1: words.slice(0, half).join(' '), line2: words.slice(half).join(' ') };
-  }
-
-  return { line1: raw, line2: '' };
+  const line1 = words.slice(0, bestIdx).join(' ').trim();
+  const line2 = words.slice(bestIdx).join(' ').trim();
+  return { line1, line2 };
 };
 
 const drawIconCircle = (ctx, cx, cy, r, type) => {
@@ -328,30 +329,53 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   const extraText = String(values?.footerRight || '').trim() || '+91 77750 00051';
 
   // 3. Left Section: Crisp Card with Dealer Name
-  const badgeW = Math.round(W * 0.28);
+  const badgeW = Math.round(W * 0.31);
   const badgeX = padX;
-  const badgeRadius = Math.round(innerH * 0.12);
+  const badgeRadius = Math.round(innerH * 0.14);
   drawRoundedRect(ctx, badgeX, innerY, badgeW, innerH, badgeRadius, dealerBg, null, 0);
 
-  const dealerFontSize = Math.round(innerH * 0.44);
+  const maxBadgeTextW = badgeW - Math.round(badgeW * 0.08);
+  let dealerFontSize = Math.round(innerH * 0.42);
   ctx.font = `bold ${dealerFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
   ctx.fillStyle = dealerColor;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const fittedName = fitText(ctx, dealerName, badgeW - Math.round(badgeW * 0.08));
-  ctx.fillText(fittedName, badgeX + badgeW / 2, innerY + innerH / 2);
+
+  // Dynamically reduce font size if needed
+  while (ctx.measureText(dealerName).width > maxBadgeTextW && dealerFontSize > Math.round(innerH * 0.28)) {
+    dealerFontSize -= 1;
+    ctx.font = `bold ${dealerFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+  }
+
+  if (ctx.measureText(dealerName).width <= maxBadgeTextW) {
+    ctx.fillText(dealerName, badgeX + badgeW / 2, innerY + innerH / 2);
+  } else {
+    // 2-line wrap for long dealer/firm names (e.g. M/S SHIV SHAKTI TRACTOR AGENCY)
+    const words = dealerName.split(/\s+/).filter(Boolean);
+    const mid = Math.ceil(words.length / 2);
+    const l1 = words.slice(0, mid).join(' ');
+    const l2 = words.slice(mid).join(' ');
+    let lineFontSize = Math.round(innerH * 0.28);
+    ctx.font = `bold ${lineFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    while ((ctx.measureText(l1).width > maxBadgeTextW || ctx.measureText(l2).width > maxBadgeTextW) && lineFontSize > Math.round(innerH * 0.18)) {
+      lineFontSize -= 1;
+      ctx.font = `bold ${lineFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    }
+    ctx.fillText(fitText(ctx, l1, maxBadgeTextW), badgeX + badgeW / 2, innerY + innerH * 0.32);
+    ctx.fillText(fitText(ctx, l2, maxBadgeTextW), badgeX + badgeW / 2, innerY + innerH * 0.68);
+  }
 
   // 4. Middle Section: Location Icon + 2-Line Address
-  const centerStartX = badgeX + badgeW + Math.round(W * 0.016);
-  const divX = W - Math.round(W * 0.27);
-  const iconR = Math.round(innerH * 0.24);
+  const centerStartX = badgeX + badgeW + Math.round(W * 0.012);
+  const divX = W - Math.round(W * 0.23);
+  const iconR = Math.round(innerH * 0.22);
   const iconCY = stripY + stripH / 2;
   const pinCX = centerStartX + iconR;
   drawIconCircle(ctx, pinCX, iconCY, iconR, 'pin');
 
-  const addrStartX = pinCX + iconR + Math.round(W * 0.01);
-  const addrMaxW = divX - addrStartX - Math.round(W * 0.014);
-  const addrFontSize = Math.round(innerH * 0.22);
+  const addrStartX = pinCX + iconR + Math.round(W * 0.008);
+  const addrMaxW = divX - addrStartX - Math.round(W * 0.01);
+  let addrFontSize = Math.round(innerH * 0.22);
 
   const { line1, line2 } = splitAddress(addressText);
 
@@ -359,12 +383,22 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   if (line2) {
-    ctx.font = `bold ${addrFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    ctx.fillText(fitText(ctx, line1, addrMaxW), addrStartX, iconCY - addrFontSize * 0.65);
-    ctx.font = `500 ${Math.round(addrFontSize * 0.88)}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    ctx.fillText(fitText(ctx, line2, addrMaxW), addrStartX, iconCY + addrFontSize * 0.65);
+    let afs = addrFontSize;
+    ctx.font = `bold ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    while ((ctx.measureText(line1).width > addrMaxW || ctx.measureText(line2).width > addrMaxW) && afs > Math.round(innerH * 0.14)) {
+      afs -= 1;
+      ctx.font = `bold ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    }
+    ctx.fillText(fitText(ctx, line1, addrMaxW), addrStartX, iconCY - afs * 0.68);
+    ctx.font = `500 ${Math.round(afs * 0.92)}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.fillText(fitText(ctx, line2, addrMaxW), addrStartX, iconCY + afs * 0.68);
   } else {
-    ctx.font = `600 ${addrFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    let afs = addrFontSize;
+    ctx.font = `600 ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    while (ctx.measureText(line1).width > addrMaxW && afs > Math.round(innerH * 0.15)) {
+      afs -= 1;
+      ctx.font = `600 ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    }
     ctx.fillText(fitText(ctx, line1, addrMaxW), addrStartX, iconCY);
   }
 
@@ -377,21 +411,23 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   ctx.stroke();
 
   // 6. Right Section: Phone Icon + 2-Line Contact Numbers
-  const rightStartX = divX + Math.round(W * 0.015);
+  const rightStartX = divX + Math.round(W * 0.01);
   const phoneCX = rightStartX + iconR;
   drawIconCircle(ctx, phoneCX, iconCY, iconR, 'phone');
 
-  const phoneStartX = phoneCX + iconR + Math.round(W * 0.01);
+  const phoneStartX = phoneCX + iconR + Math.round(W * 0.008);
   const phoneMaxW = (W - padX) - phoneStartX;
-  const phoneFontSize = Math.round(innerH * 0.22);
+  let phoneFontSize = Math.round(innerH * 0.22);
+  ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+  while ((ctx.measureText(phoneText).width > phoneMaxW || ctx.measureText(extraText).width > phoneMaxW) && phoneFontSize > Math.round(innerH * 0.15)) {
+    phoneFontSize -= 1;
+    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+  }
 
   if (extraText) {
-    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY - phoneFontSize * 0.62);
-    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, extraText, phoneMaxW), phoneStartX, iconCY + phoneFontSize * 0.62);
   } else {
-    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY);
   }
 
