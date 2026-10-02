@@ -350,11 +350,11 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
 
   const dealerName = String(values?.headerText || '').trim() || 'मॉडल एजन्सीज';
   const addressText = String(values?.headerSub || '').trim() || 'एन. एच. 6 बेला, भंडारा- 441906\nशाखा-तुमसर, साकोली, आसगाव, लाखांदूर';
-  const phoneText = String(values?.footerLeft || '').trim() || '+91 80075 48833';
-  const extraText = String(values?.footerRight || '').trim() || '+91 77750 00051';
+  const phoneText = String(values?.footerLeft || '').trim() || '+91 1800 425 6576';
+  const extraText = String(values?.footerRight || '').trim() || 'www.swarajtractors.com';
 
   // 3. Left Section: Crisp Card with Dealer Name
-  const badgeW = Math.round(W * 0.31);
+  const badgeW = Math.round(W * 0.30);
   const badgeX = padX;
   const badgeRadius = Math.round(innerH * 0.14);
   drawRoundedRect(ctx, badgeX, innerY, badgeW, innerH, badgeRadius, dealerBg, null, 0);
@@ -392,7 +392,7 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
 
   // 4. Middle Section: Location Icon + 2-Line Address
   const centerStartX = badgeX + badgeW + Math.round(W * 0.012);
-  const divX = W - Math.round(W * 0.23);
+  const divX = W - Math.round(W * 0.28);
   const iconR = Math.round(innerH * 0.22);
   const iconCY = stripY + stripH / 2;
   const pinCX = centerStartX + iconR;
@@ -435,25 +435,40 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   ctx.lineTo(divX, innerY + innerH * 0.88);
   ctx.stroke();
 
-  // 6. Right Section: Phone Icon + 2-Line Contact Numbers
-  const rightStartX = divX + Math.round(W * 0.01);
+  // 6. Right Section: Phone Icon + 2-Line Contact Numbers / Website
+  const rightStartX = divX + Math.round(W * 0.008);
   const phoneCX = rightStartX + iconR;
   drawIconCircle(ctx, phoneCX, iconCY, iconR, 'phone');
 
-  const phoneStartX = phoneCX + iconR + Math.round(W * 0.008);
+  const phoneStartX = phoneCX + iconR + Math.round(W * 0.006);
   const phoneMaxW = (W - padX) - phoneStartX;
   const cleanExtra = String(extraText || '').replace(/^https?:\/\//i, '');
+
   let phoneFontSize = Math.round(innerH * 0.22);
   ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-  while ((ctx.measureText(phoneText).width > phoneMaxW || ctx.measureText(cleanExtra).width > phoneMaxW) && phoneFontSize > Math.round(innerH * 0.12)) {
+  while (ctx.measureText(phoneText).width > phoneMaxW && phoneFontSize > Math.round(innerH * 0.13)) {
     phoneFontSize -= 1;
     ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
   }
 
+  let extraFontSize = Math.round(innerH * 0.19);
+  ctx.font = `600 ${extraFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+  while (ctx.measureText(cleanExtra).width > phoneMaxW && extraFontSize > Math.round(innerH * 0.10)) {
+    extraFontSize -= 1;
+    ctx.font = `600 ${extraFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+  }
+
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+
   if (cleanExtra) {
+    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY - phoneFontSize * 0.62);
-    ctx.fillText(fitText(ctx, cleanExtra, phoneMaxW), phoneStartX, iconCY + phoneFontSize * 0.62);
+    ctx.font = `600 ${extraFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.fillText(fitText(ctx, cleanExtra, phoneMaxW), phoneStartX, iconCY + extraFontSize * 0.62);
   } else {
+    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY);
   }
 

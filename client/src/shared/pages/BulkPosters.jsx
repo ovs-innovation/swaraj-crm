@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import JSZip from 'jszip';
 import { Trash2 } from 'lucide-react';
 import { postersAPI, settingsAPI } from '../../services/api';
 import { useLang } from '../context/LanguageContext';
@@ -30,6 +31,8 @@ const BulkPosters = () => {
   const [preview, setPreview] = useState(null);
   const [ask, setAsk] = useState(null);
   const [progress, setProgress] = useState(null);
+  const [downloadingZip, setDownloadingZip] = useState(false);
+  const [zipProgress, setZipProgress] = useState('');
   const [design, setDesign] = useState(false);
   const [aspectRatio, setAspectRatio] = useState('4:5');
   const [showBrandBadges, setShowBrandBadges] = useState(true);
@@ -146,10 +149,10 @@ const BulkPosters = () => {
       for (let i = 0; i < total; i += 1) {
         const row = job.rows[i];
         const values = {
-          headerText: cellFromRow(row, mapping.headerText),
-          headerSub: cellFromRow(row, mapping.headerSub),
-          footerLeft: cellFromRow(row, mapping.footerLeft),
-          footerRight: cellFromRow(row, mapping.footerRight),
+          headerText: cellFromRow(row, mapping.headerText) || customDefaults.headerText || '',
+          headerSub: cellFromRow(row, mapping.headerSub) || customDefaults.headerSub || '',
+          footerLeft: cellFromRow(row, mapping.footerLeft) || customDefaults.footerLeft || '',
+          footerRight: cellFromRow(row, mapping.footerRight) || customDefaults.footerRight || 'www.swarajtractors.com',
         };
         setProgress({ done: i + 1, total });
         await new Promise((r) => requestAnimationFrame(() => r()));
@@ -200,6 +203,83 @@ const BulkPosters = () => {
     }
   };
 
+  const downloadAllZip = async () => {
+    if (!posters.length) return;
+    setDownloadingZip(true);
+    setZipProgress(`0 / ${posters.length}`);
+    try {
+      const zip = new JSZip();
+      const folderName = (job?.fileName || 'Swaraj-Dealer-Posters')
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[^a-zA-Z0-9_-]/g, '_');
+      const folder = zip.folder(folderName) || zip;
+
+      const sanitize = (name) => String(name || 'dealer').replace(/[/\\?%*:|"<>]/g, '_').trim();
+
+      const BATCH = 5;
+      for (let i = 0; i < posters.length; i += BATCH) {
+        const slice = posters.slice(i, i + BATCH);
+        await Promise.all(
+          slice.map(async (p, idx) => {
+            const posterIndex = i + idx;
+            const url = mediaUrl(p.url);
+            try {
+              const resp = await fetch(url, { mode: 'cors' });
+              if (!resp.ok) throw new Error('Fetch failed');
+              const blob = await resp.blob();
+              const filename = `${String(posterIndex + 1).padStart(2, '0')}_${sanitize(p.dealerName)}.png`;
+              folder.file(filename, blob);
+            } catch (err) {
+              console.warn('Direct fetch failed, falling back to canvas draw:', p.dealerName, err);
+              try {
+                const img = await loadPosterImage(url);
+                const c = document.createElement('canvas');
+                c.width = img.naturalWidth || 1080;
+                c.height = img.naturalHeight || 1350;
+                const ctx = c.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                const b = await new Promise((resolve) => c.toBlob(resolve, 'image/png'));
+                const filename = `${String(posterIndex + 1).padStart(2, '0')}_${sanitize(p.dealerName)}.png`;
+                folder.file(filename, b);
+              } catch (err2) {
+                console.error('Could not add poster to zip:', p.dealerName, err2);
+              }
+            }
+            setZipProgress(`${Math.min(i + idx + 1, posters.length)} / ${posters.length}`);
+          })
+        );
+      }
+
+      setZipProgress('Generating ZIP...');
+      const zipBlob = await zip.generateAsync(
+        {
+          type: 'blob',
+          compression: 'DEFLATE',
+          compressionOptions: { level: 4 },
+        },
+        (metadata) => {
+          setZipProgress(`Compressing ${Math.round(metadata.percent)}%`);
+        }
+      );
+
+      const downloadUrl = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `${folderName}.zip`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(downloadUrl), 60000);
+      setMsg(`Downloaded all ${posters.length} posters in ${folderName}.zip!`);
+    } catch (err) {
+      console.error('ZIP download error:', err);
+      setError('Failed to download ZIP. Please try again.');
+    } finally {
+      setDownloadingZip(false);
+      setZipProgress('');
+    }
+  };
+
   const setCell = (rowIndex, col, value) => {
     setJob({
       ...job,
@@ -230,7 +310,13 @@ const BulkPosters = () => {
       const idx = selectedRowIdx || 0;
       setJob((prev) => ({
         ...prev,
-        rows: prev.rows.map((r, i) => (i === idx ? { ...r, [col]: val } : r)),
+        rows: prev.rows.map((r, i) => {
+          if (i === idx) return { ...r, [col]: val };
+          if (fieldKey === 'footerRight' && (!r[col] || r[col] === customDefaults.footerRight)) {
+            return { ...r, [col]: val };
+          }
+          return r;
+        }),
       }));
     }
   };
@@ -697,7 +783,7 @@ const BulkPosters = () => {
                             <strong className="phone-line1">{sampleVals.footerLeft}</strong>
                             {sampleVals.footerRight && (
                               <strong className="phone-line2">
-                                {String(sampleVals.footerRight).replace(/^https?:\/\/(www\.)?/i, '')}
+                                {String(sampleVals.footerRight).replace(/^https?:\/\//i, '')}
                               </strong>
                             )}
                           </div>
@@ -734,6 +820,30 @@ const BulkPosters = () => {
               >
                 {t('posters.sendAm')} {job.areaManager?.name ? `· ${job.areaManager.name}` : ''}
               </button>
+              {!!posters.length && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{
+                    width: '100%',
+                    justifyContent: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    background: '#00843D',
+                    borderColor: '#00843D',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    padding: '0.65rem',
+                    boxShadow: '0 4px 12px rgba(0, 132, 61, 0.25)',
+                    cursor: downloadingZip ? 'wait' : 'pointer',
+                  }}
+                  disabled={downloadingZip || busy}
+                  onClick={downloadAllZip}
+                >
+                  {downloadingZip ? `⏳ ${zipProgress || 'Preparing ZIP...'}` : `📦 Download All (${posters.length} ZIP)`}
+                </button>
+              )}
               {progress && <p className="poster-sample">{progress.done}/{progress.total}</p>}
             </div>
           </div>
@@ -751,13 +861,21 @@ const BulkPosters = () => {
                   {rows.map((r, i) => (
                     <tr key={i}>
                       {FIELDS.map((f) => {
-                        const col = mapping[f.key];
+                        const col = mapping[f.key] || f.key;
+                        const cellVal = (r[col] != null && String(r[col]).trim() !== '')
+                          ? String(r[col])
+                          : (f.key === 'footerRight' ? (customDefaults.footerRight || 'www.swarajtractors.com') : '');
                         return (
                           <td key={f.key}>
                             <input
                               className="poster-cell"
-                              value={col ? String(r[col] ?? '') : ''}
-                              onChange={(e) => col && setCell(i, col, e.target.value)}
+                              value={cellVal}
+                              onChange={(e) => {
+                                if (!mapping[f.key]) {
+                                  setMapping((m) => ({ ...m, [f.key]: col }));
+                                }
+                                setCell(i, col, e.target.value);
+                              }}
                             />
                           </td>
                         );
@@ -787,7 +905,37 @@ const BulkPosters = () => {
 
           {!!posters.length && (
             <div className="card">
-              <h3 className="card-title">{t('posters.mine')}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <h3 className="card-title" style={{ margin: 0 }}>
+                  {t('posters.mine')} ({posters.length})
+                </h3>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    background: '#00843D',
+                    borderColor: '#00843D',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    padding: '0.55rem 1.25rem',
+                    fontSize: '0.92rem',
+                    borderRadius: 6,
+                    boxShadow: '0 4px 12px rgba(0, 132, 61, 0.25)',
+                    cursor: downloadingZip ? 'wait' : 'pointer',
+                  }}
+                  onClick={downloadAllZip}
+                  disabled={downloadingZip || busy}
+                >
+                  {downloadingZip ? (
+                    <>⏳ {zipProgress || 'Preparing ZIP...'}</>
+                  ) : (
+                    <>📦 Download All ({posters.length} Posters ZIP)</>
+                  )}
+                </button>
+              </div>
               <div className="poster-mosaic">
                 {posters.map((p, i) => (
                   <div key={p._id} className="poster-tile">
@@ -805,7 +953,17 @@ const BulkPosters = () => {
         </>
       )}
 
-      <PosterLightbox posters={posters} index={preview} onIndex={setPreview} onClose={() => setPreview(null)} />
+      <PosterLightbox posters={posters} index={preview} onIndex={setPreview} onClose={() => setPreview(null)}>
+        <button
+          type="button"
+          className="btn btn-sm poster-lb-btn"
+          style={{ background: '#00843D', color: '#ffffff', border: 'none', fontWeight: 600 }}
+          disabled={downloadingZip}
+          onClick={downloadAllZip}
+        >
+          {downloadingZip ? `⏳ ${zipProgress || 'Zipping...'}` : `📦 Download All (${posters.length} ZIP)`}
+        </button>
+      </PosterLightbox>
       {design && (
         <div className="poster-design-wrap">
           <div className="poster-design-bar">
