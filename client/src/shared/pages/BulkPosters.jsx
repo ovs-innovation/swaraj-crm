@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import { Trash2 } from 'lucide-react';
 import { postersAPI, settingsAPI } from '../../services/api';
 import { useLang } from '../context/LanguageContext';
-import { composePosterBlob, loadPosterImage, cellFromRow, guessPosterMapping, splitAddress, splitDealerName } from '../../utils/composePoster';
+import { composePosterBlob, loadPosterImage, cellFromRow, guessPosterMapping, splitAddress, splitAddressLines, splitDealerName, formatContactNumbers } from '../../utils/composePoster';
 import { mediaUrl } from '../../utils/mediaUrl';
 import PosterLightbox from '../components/PosterLightbox';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -56,7 +56,7 @@ const BulkPosters = () => {
 
   const loadSheets = () => postersAPI.sheets().then((res) => setSheets(res.data.data || [])).catch((err) => setError(err.response?.data?.message || t('loadFail')));
   const loadPosters = (sheetId) => {
-    postersAPI.getAll(sheetId ? { sheetId } : {}).then((res) => setPosters(res.data.data || [])).catch(() => {});
+    postersAPI.getAll(sheetId ? { sheetId } : {}).then((res) => setPosters(res.data.data || [])).catch(() => { });
   };
 
   useEffect(() => {
@@ -64,7 +64,7 @@ const BulkPosters = () => {
       const lh = res.data.data?.letterhead;
       setLetterhead(lh || {});
       if (lh?.imageUrl) setPicture(mediaUrl(lh.imageUrl));
-    }).catch(() => {});
+    }).catch(() => { });
     loadSheets();
   }, []);
 
@@ -297,7 +297,12 @@ const BulkPosters = () => {
     footerRight: (currentRow && cellFromRow(currentRow, mapping.footerRight)) || customDefaults.footerRight,
   };
   const { line1: sampleAddr1, line2: sampleAddr2 } = splitAddress(sampleVals.headerSub);
+  const sampleAddrLines = splitAddressLines(sampleVals.headerSub, 2);
   const { line1: sampleDealer1, line2: sampleDealer2 } = splitDealerName(sampleVals.headerText);
+  const rawDealerName = String(sampleVals.headerText || '').trim();
+  const dealerMatch = rawDealerName.match(/^(M\/S\.?|M\/s\.?|MS\.?|SHREE|SHRI)\s+/i);
+  const samplePrefix = dealerMatch ? dealerMatch[0].toUpperCase() : '';
+  const sampleCompany = dealerMatch ? rawDealerName.slice(dealerMatch[0].length).trim().toUpperCase() : rawDealerName.toUpperCase();
 
   const updateCurrentVal = (fieldKey, val) => {
     setCustomDefaults((prev) => ({ ...prev, [fieldKey]: val }));
@@ -738,54 +743,85 @@ const BulkPosters = () => {
                         </>
                       )}
 
-                      <div
-                        className="poster-live-footer-strip"
-                        style={{ background: footerBg }}
-                      >
+                      <div className="poster-promo-footer">
                         <div
-                          className="poster-strip-badge"
-                          style={{ background: dealerBg }}
-                          title="Click to edit dealer name"
-                          onClick={() => { setShowEditor(true); setActiveTab('details'); }}
+                          className="poster-promo-red-wrap"
+                          style={{ background: 'linear-gradient(to bottom, #860017, #52000A)' }}
                         >
-                          <div className="poster-strip-dealer-box" style={{ color: dealerColor }}>
-                            <span className="dealer-l1">{sampleDealer1}</span>
-                            {sampleDealer2 && <span className="dealer-l2">{sampleDealer2}</span>}
+                          <div
+                            className="poster-promo-header"
+                            title="Click to edit dealer name"
+                            onClick={() => { setShowEditor(true); setActiveTab('details'); }}
+                          >
+                            <h2 className="poster-promo-dealer">
+                              {samplePrefix && <span className="dealer-prefix">{samplePrefix}</span>}
+                              <span className="dealer-brand">{sampleCompany}</span>
+                            </h2>
+                            <div className="poster-promo-dash">
+                              <span className="dash-bar" />
+                              <span className="dash-bar" />
+                            </div>
                           </div>
-                        </div>
-                        <div
-                          className="poster-strip-center"
-                          title="Click to edit address"
-                          onClick={() => { setShowEditor(true); setActiveTab('details'); }}
-                        >
-                          <span className="poster-strip-circle-icon">
-                            <svg viewBox="0 0 24 24" style={{ fill: footerBg }}>
-                              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z"/>
-                            </svg>
-                          </span>
-                          <div className="poster-strip-text">
-                            <strong className="addr-line1">{sampleAddr1}</strong>
-                            {sampleAddr2 && <span className="addr-line2">{sampleAddr2}</span>}
-                          </div>
-                        </div>
-                        <div className="poster-strip-divider" />
-                        <div
-                          className="poster-strip-right"
-                          title="Click to edit contact numbers"
-                          onClick={() => { setShowEditor(true); setActiveTab('details'); }}
-                        >
-                          <span className="poster-strip-circle-icon">
-                            <svg viewBox="0 0 24 24" style={{ fill: footerBg }}>
-                              <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2z"/>
-                            </svg>
-                          </span>
-                          <div className="poster-strip-text">
-                            <strong className="phone-line1">{sampleVals.footerLeft}</strong>
-                            {sampleVals.footerRight && (
-                              <strong className="phone-line2">
-                                {String(sampleVals.footerRight).replace(/^https?:\/\//i, '')}
+
+                          <div className="poster-promo-pill">
+                            <div
+                              className="poster-promo-pill-left"
+                              title="Click to edit address"
+                              onClick={() => { setShowEditor(true); setActiveTab('details'); }}
+                            >
+                              <span className="poster-promo-icon pin-icon">
+                                <svg viewBox="0 0 24 24">
+                                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z" />
+                                </svg>
+                              </span>
+                              <div className="poster-promo-addr">
+                                {sampleAddrLines.map((line, idx) => (
+                                  <span key={idx} className="promo-addr-line">{line}</span>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="poster-promo-pill-div" />
+
+                            <div
+                              className="poster-promo-pill-right"
+                              title="Click to edit phone number"
+                              onClick={() => { setShowEditor(true); setActiveTab('details'); }}
+                            >
+                              <span className="poster-promo-icon phone-icon">
+                                <svg viewBox="0 0 24 24">
+                                  <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2z" />
+                                </svg>
+                              </span>
+                              <strong className="poster-promo-phone">
+                                {formatContactNumbers(sampleVals.footerLeft)}
                               </strong>
-                            )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          className="poster-promo-web-bar"
+                          title="Click to edit website"
+                          onClick={() => { setShowEditor(true); setActiveTab('details'); }}
+                        >
+                          <div className="promo-web-flank">
+                            <span className="flank-line" />
+                            <span className="flank-line" />
+                          </div>
+                          <div className="promo-web-center">
+                            <span className="promo-web-badge">
+                              <svg viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                              </svg>
+                            </span>
+                            <span className="promo-web-url">
+                              {String(sampleVals.footerRight || 'www.swarajtractors.com').replace(/^https?:\/\//i, '')}
+                            </span>
+                          </div>
+                          <div className="promo-web-flank">
+                            <span className="flank-line" />
+                            <span className="flank-line" />
                           </div>
                         </div>
                       </div>
