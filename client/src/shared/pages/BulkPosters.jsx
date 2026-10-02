@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Trash2 } from 'lucide-react';
 import { postersAPI, settingsAPI } from '../../services/api';
 import { useLang } from '../context/LanguageContext';
-import { composePosterBlob, loadPosterImage, cellFromRow, guessPosterMapping, splitAddress } from '../../utils/composePoster';
+import { composePosterBlob, loadPosterImage, cellFromRow, guessPosterMapping, splitAddress, splitDealerName } from '../../utils/composePoster';
 import { mediaUrl } from '../../utils/mediaUrl';
 import PosterLightbox from '../components/PosterLightbox';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -217,6 +217,7 @@ const BulkPosters = () => {
     footerRight: (currentRow && cellFromRow(currentRow, mapping.footerRight)) || customDefaults.footerRight,
   };
   const { line1: sampleAddr1, line2: sampleAddr2 } = splitAddress(sampleVals.headerSub);
+  const { line1: sampleDealer1, line2: sampleDealer2 } = splitDealerName(sampleVals.headerText);
 
   const updateCurrentVal = (fieldKey, val) => {
     setCustomDefaults((prev) => ({ ...prev, [fieldKey]: val }));
@@ -661,9 +662,10 @@ const BulkPosters = () => {
                           title="Click to edit dealer name"
                           onClick={() => { setShowEditor(true); setActiveTab('details'); }}
                         >
-                          <span className="poster-strip-dealer" style={{ color: dealerColor }}>
-                            {sampleVals.headerText}
-                          </span>
+                          <div className="poster-strip-dealer-box" style={{ color: dealerColor }}>
+                            <span className="dealer-l1">{sampleDealer1}</span>
+                            {sampleDealer2 && <span className="dealer-l2">{sampleDealer2}</span>}
+                          </div>
                         </div>
                         <div
                           className="poster-strip-center"
@@ -693,7 +695,11 @@ const BulkPosters = () => {
                           </span>
                           <div className="poster-strip-text">
                             <strong className="phone-line1">{sampleVals.footerLeft}</strong>
-                            {sampleVals.footerRight && <strong className="phone-line2">{sampleVals.footerRight}</strong>}
+                            {sampleVals.footerRight && (
+                              <strong className="phone-line2">
+                                {String(sampleVals.footerRight).replace(/^https?:\/\/(www\.)?/i, '')}
+                              </strong>
+                            )}
                           </div>
                         </div>
                       </div>

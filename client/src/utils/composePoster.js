@@ -200,6 +200,31 @@ export const splitAddress = (addressText) => {
   return { line1, line2 };
 };
 
+export const splitDealerName = (name) => {
+  const raw = String(name || '').trim().replace(/\s+/g, ' ');
+  if (!raw) return { line1: '', line2: '' };
+  if (raw.length <= 15) return { line1: raw, line2: '' };
+  const words = raw.split(' ').filter(Boolean);
+  if (words.length <= 1) return { line1: raw, line2: '' };
+
+  const targetHalf = Math.floor(raw.length / 2);
+  let bestIdx = 1;
+  let minDiff = Infinity;
+  let curLen = 0;
+  for (let i = 0; i < words.length - 1; i += 1) {
+    curLen += words[i].length + (i > 0 ? 1 : 0);
+    const diff = Math.abs(curLen - targetHalf);
+    if (diff < minDiff) {
+      minDiff = diff;
+      bestIdx = i + 1;
+    }
+  }
+  return {
+    line1: words.slice(0, bestIdx).join(' ').trim(),
+    line2: words.slice(bestIdx).join(' ').trim(),
+  };
+};
+
 const drawIconCircle = (ctx, cx, cy, r, type) => {
   ctx.save();
   ctx.fillStyle = '#ffffff';
@@ -417,16 +442,17 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
 
   const phoneStartX = phoneCX + iconR + Math.round(W * 0.008);
   const phoneMaxW = (W - padX) - phoneStartX;
+  const cleanExtra = String(extraText || '').replace(/^https?:\/\//i, '');
   let phoneFontSize = Math.round(innerH * 0.22);
   ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-  while ((ctx.measureText(phoneText).width > phoneMaxW || ctx.measureText(extraText).width > phoneMaxW) && phoneFontSize > Math.round(innerH * 0.15)) {
+  while ((ctx.measureText(phoneText).width > phoneMaxW || ctx.measureText(cleanExtra).width > phoneMaxW) && phoneFontSize > Math.round(innerH * 0.12)) {
     phoneFontSize -= 1;
     ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
   }
 
-  if (extraText) {
+  if (cleanExtra) {
     ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY - phoneFontSize * 0.62);
-    ctx.fillText(fitText(ctx, extraText, phoneMaxW), phoneStartX, iconCY + phoneFontSize * 0.62);
+    ctx.fillText(fitText(ctx, cleanExtra, phoneMaxW), phoneStartX, iconCY + phoneFontSize * 0.62);
   } else {
     ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY);
   }

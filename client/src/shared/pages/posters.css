@@ -451,9 +451,9 @@
 .poster-strip-right {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   flex-shrink: 0;
-  max-width: 25%;
+  max-width: 27%;
   cursor: pointer;
   transition: opacity 0.15s ease;
   overflow: hidden;
@@ -463,20 +463,25 @@
   opacity: 0.9;
 }
 
-.poster-strip-dealer {
-  font-size: clamp(0.55rem, 1.3vw, 0.8rem);
-  font-weight: 800;
-  color: #00843D; /* Swaraj Emerald Green */
-  text-align: center;
+.poster-strip-dealer-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  letter-spacing: 0.01em;
   line-height: 1.15;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  text-align: center;
   overflow: hidden;
-  text-overflow: ellipsis;
-  word-break: break-word;
+}
+
+.poster-strip-dealer-box .dealer-l1,
+.poster-strip-dealer-box .dealer-l2 {
+  font-size: clamp(0.48rem, 1.15vw, 0.72rem);
+  font-weight: 800;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  display: block;
+  max-width: 100%;
 }
 
 .poster-strip-circle-icon {
@@ -509,8 +514,6 @@
   font-size: clamp(0.52rem, 1.2vw, 0.68rem);
   font-weight: 700;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   color: #ffffff;
 }
 
@@ -519,8 +522,6 @@
   font-weight: 500;
   opacity: 0.95;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   color: #f1f5f9;
 }
 
@@ -531,15 +532,19 @@
   flex-shrink: 0;
 }
 
-.poster-strip-text .phone-line1,
-.poster-strip-text .phone-line2 {
-  font-size: clamp(0.52rem, 1.2vw, 0.68rem);
+.poster-strip-text .phone-line1 {
+  font-size: clamp(0.50rem, 1.1vw, 0.68rem);
   font-weight: 700;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   color: #ffffff;
-  letter-spacing: 0.02em;
+}
+
+.poster-strip-text .phone-line2 {
+  font-size: clamp(0.42rem, 0.95vw, 0.58rem);
+  font-weight: 600;
+  white-space: nowrap;
+  color: #ffffff;
+  letter-spacing: -0.01em;
 }
 
 .poster-actions {
