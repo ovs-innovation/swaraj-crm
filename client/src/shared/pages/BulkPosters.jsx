@@ -710,44 +710,49 @@ const BulkPosters = () => {
 
               <div className="poster-preview-stage">
                 <div className={`poster-live aspect-${aspectRatio === '4:5' ? 'portrait' : aspectRatio === '1:1' ? 'square' : 'original'}`}>
-                  {templateSrc ? (
-                    <img className="poster-bg-img" src={templateSrc} alt="Poster Template" />
-                  ) : (
-                    <div className="empty-state" style={{ minHeight: 220 }}>{t('posters.needTpl')}</div>
-                  )}
+                  <div className="poster-img-wrap">
+                    {templateSrc ? (
+                      <img className="poster-bg-img" src={templateSrc} alt="Poster Template" />
+                    ) : (
+                      <div className="empty-state" style={{ minHeight: 220 }}>{t('posters.needTpl')}</div>
+                    )}
+
+                    {templateSrc && showBrandBadges && (
+                      <>
+                        {topLeftLogo && (
+                          <div
+                            className="poster-top-seal-badge interactive"
+                            title="Click to replace top-left logo"
+                            onClick={() => leftLogoInputRef.current?.click()}
+                          >
+                            <img src={topLeftLogo} alt="Top-Left Logo" />
+                            <span className="poster-badge-hover-hint">Change Logo</span>
+                          </div>
+                        )}
+                        {topRightLogo && (
+                          <div
+                            className="poster-top-josh-badge interactive"
+                            title="Click to replace top-right logo"
+                            onClick={() => rightLogoInputRef.current?.click()}
+                          >
+                            <img src={topRightLogo} alt="Top-Right Logo" />
+                            <span className="poster-badge-hover-hint">Change Logo</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
 
                   {templateSrc && (
-                    <>
-                      {showBrandBadges && (
-                        <>
-                          {topLeftLogo && (
-                            <div
-                              className="poster-top-seal-badge interactive"
-                              title="Click to replace top-left logo"
-                              onClick={() => leftLogoInputRef.current?.click()}
-                            >
-                              <img src={topLeftLogo} alt="Top-Left Logo" />
-                              <span className="poster-badge-hover-hint">Change Logo</span>
-                            </div>
-                          )}
-                          {topRightLogo && (
-                            <div
-                              className="poster-top-josh-badge interactive"
-                              title="Click to replace top-right logo"
-                              onClick={() => rightLogoInputRef.current?.click()}
-                            >
-                              <img src={topRightLogo} alt="Top-Right Logo" />
-                              <span className="poster-badge-hover-hint">Change Logo</span>
-                            </div>
-                          )}
-                        </>
-                      )}
-
-                      <div className="poster-promo-footer">
-                        <div
-                          className="poster-promo-red-wrap"
-                          style={{ background: 'linear-gradient(to bottom, #860017, #52000A)' }}
-                        >
+                    <div className="poster-promo-footer">
+                      <div
+                        className="poster-promo-red-wrap"
+                        style={{
+                          background: footerBg === '#BA0C2F'
+                            ? 'linear-gradient(to bottom, #860017, #52000A)'
+                            : footerBg,
+                        }}
+                      >
                           <div
                             className="poster-promo-header"
                             title="Click to edit dealer name"
@@ -825,9 +830,8 @@ const BulkPosters = () => {
                           </div>
                         </div>
                       </div>
-                    </>
-                  )}
-                </div>
+                    )}
+                  </div>
               </div>
             </div>
 

@@ -318,6 +318,8 @@
   background: #0f172a;
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.35), 0 4px 14px rgba(0, 0, 0, 0.2);
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .poster-live.aspect-portrait {
@@ -331,15 +333,37 @@
 }
 
 .poster-live.aspect-original {
-  width: 100%;
+  width: min(100%, 460px);
 }
 
-.poster-live img.poster-bg-img {
+.poster-img-wrap {
+  position: relative;
+  width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.poster-live.aspect-original .poster-img-wrap {
+  flex: none;
+  height: auto;
+}
+
+.poster-img-wrap img.poster-bg-img {
   width: 100%;
   height: 100%;
   display: block;
   object-fit: cover;
   object-position: center;
+}
+
+.poster-live.aspect-original .poster-img-wrap img.poster-bg-img {
+  height: auto;
+  object-fit: contain;
 }
 
 .poster-top-seal-badge {
@@ -426,29 +450,40 @@
    Tier 3: Swaraj Forest Green Bar with Globe+Website & Lines
 ------------------------------------------------------------- */
 .poster-promo-footer {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  position: relative;
   width: 100%;
-  height: 21.8%;
-  min-height: 110px;
   display: flex;
   flex-direction: column;
   z-index: 10;
   pointer-events: auto;
   user-select: none;
+  flex-shrink: 0;
+}
+
+.poster-live.aspect-portrait .poster-promo-footer {
+  height: 22.5%;
+  min-height: 122px;
+}
+
+.poster-live.aspect-square .poster-promo-footer {
+  height: 25%;
+  min-height: 114px;
+}
+
+.poster-live.aspect-original .poster-promo-footer {
+  min-height: 124px;
 }
 
 .poster-promo-red-wrap {
   flex: 1;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   padding: 2.2% 3.2% 3%;
-  box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35);
+  border-top: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.35);
   position: relative;
   min-height: 0;
 }

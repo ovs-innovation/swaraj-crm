@@ -341,17 +341,24 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   const img = preloaded || (await loadPosterImage(imageSrc));
   const aspectMode = options.aspectRatio || letterhead?.aspectRatio || '4:5';
 
-  let W, H;
+  let W, H, stripH, imgH;
   if (aspectMode === '4:5') {
     W = 2160;
     H = 2700;
+    stripH = Math.round(H * 0.22);
+    imgH = H - stripH;
   } else if (aspectMode === '1:1') {
     W = 2160;
     H = 2160;
+    stripH = Math.round(H * 0.25);
+    imgH = H - stripH;
   } else {
-    const s = sizeTo8k(img.naturalWidth, img.naturalHeight);
-    W = s.W;
-    H = s.H;
+    // Preserve 100% of original image dimensions and attach footer cleanly below
+    W = 2160;
+    stripH = Math.round(W * 0.27);
+    const scale = W / (img.naturalWidth || W);
+    imgH = Math.round((img.naturalHeight || W) * scale);
+    H = imgH + stripH;
   }
 
   const canvas = document.createElement('canvas');
@@ -361,18 +368,26 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // Draw background image with center-cover cropping
-  const targetAspect = W / H;
-  const imgAspect = (img.naturalWidth || W) / (img.naturalHeight || H);
-  let sx = 0, sy = 0, sWidth = img.naturalWidth, sHeight = img.naturalHeight;
-  if (imgAspect > targetAspect) {
-    sWidth = img.naturalHeight * targetAspect;
-    sx = (img.naturalWidth - sWidth) / 2;
-  } else if (imgAspect < targetAspect) {
-    sHeight = img.naturalWidth / targetAspect;
-    sy = (img.naturalHeight - sHeight) / 2;
+  // Base canvas background
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw background image strictly in image zone (0, 0, W, imgH) - NEVER covered by footer
+  if (aspectMode === 'original') {
+    ctx.drawImage(img, 0, 0, img.naturalWidth, img.naturalHeight, 0, 0, W, imgH);
+  } else {
+    const targetAspect = W / imgH;
+    const imgAspect = (img.naturalWidth || W) / (img.naturalHeight || imgH);
+    let sx = 0, sy = 0, sWidth = img.naturalWidth, sHeight = img.naturalHeight;
+    if (imgAspect > targetAspect) {
+      sWidth = img.naturalHeight * targetAspect;
+      sx = (img.naturalWidth - sWidth) / 2;
+    } else if (imgAspect < targetAspect) {
+      sHeight = img.naturalWidth / targetAspect;
+      sy = (img.naturalHeight - sHeight) / 2;
+    }
+    ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, W, imgH);
   }
-  ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, W, H);
 
   // 1. Draw Top-Left & Top-Right Brand Badges / Custom Logos
   if (options.showBrandBadges !== false) {
@@ -386,7 +401,7 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
         const sealW = Math.round(W * 0.165);
         const sealH = Math.round(sealW / aspect);
         const sealX = Math.round(W * 0.04);
-        const sealY = Math.round(H * 0.032);
+        const sealY = Math.round(imgH * 0.038);
         ctx.drawImage(sealImg, sealX, sealY, sealW, sealH);
       } catch (err) {
         console.warn('Could not draw left logo:', err);
@@ -400,7 +415,7 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
         const joshW = Math.round(W * 0.23);
         const joshH = Math.round(joshW / aspect);
         const joshX = W - joshW - Math.round(W * 0.04);
-        const joshY = Math.round(H * 0.032);
+        const joshY = Math.round(imgH * 0.038);
         ctx.drawImage(joshImg, joshX, joshY, joshW, joshH);
       } catch (err) {
         console.warn('Could not draw right logo:', err);
@@ -408,13 +423,11 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
     }
   }
 
-  // 2. Swaraj Official 3-Tier Promotional Footer Card
-  const stripH = Math.round(H * 0.205); // ~20.5% of poster height matching mockup
-  const stripY = H - stripH;
-
-  const greenH = Math.round(stripH * 0.25); // ~25% for bottom green website bar
+  // 2. Swaraj Official 3-Tier Promotional Footer Card (Positioned directly below the image)
+  const stripY = imgH;
+  const greenH = Math.round(stripH * 0.26); // ~26% for bottom green website bar
   const greenY = H - greenH;
-  const redH = stripH - greenH; // ~75% for top red section (dealer name + white pill)
+  const redH = stripH - greenH; // ~74% for top red section (dealer name + white pill)
   const redY = stripY;
 
   const dealerName = String(values?.headerText || '').trim() || 'M/S DANGA TRADERS';
@@ -423,17 +436,23 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   const extraText = String(values?.footerRight || '').trim() || 'www.swarajtractors.com';
 
   // -------------------------------------------------------------
-  // TIER 1 & 2: RED SECTION WITH ROUNDED TOP CORNERS
+  // TIER 1 & 2: RED SECTION ATTACHED DIRECTLY BELOW THE IMAGE
   // -------------------------------------------------------------
-  const topRadius = Math.round(W * 0.025);
+  const redBgColor = options.footerBg || '#BA0C2F';
   const redGrad = ctx.createLinearGradient(0, redY, 0, redY + redH);
-  redGrad.addColorStop(0, '#860017');
-  redGrad.addColorStop(1, '#52000A');
-  drawRoundedTopRect(ctx, 0, redY, W, redH, topRadius, redGrad);
+  if (redBgColor === '#BA0C2F') {
+    redGrad.addColorStop(0, '#860017');
+    redGrad.addColorStop(1, '#52000A');
+  } else {
+    redGrad.addColorStop(0, redBgColor);
+    redGrad.addColorStop(1, redBgColor);
+  }
+  ctx.fillStyle = redGrad;
+  ctx.fillRect(0, redY, W, redH);
 
-  // Top highlight line on red section
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-  ctx.fillRect(topRadius, redY, W - topRadius * 2, Math.max(2, Math.round(H * 0.0014)));
+  // Top highlight/accent divider line between image and footer
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+  ctx.fillRect(0, redY, W, Math.max(3, Math.round(H * 0.0016)));
 
   // TIER 1: DEALER NAME HEADER
   const headerAreaH = Math.round(redH * 0.48);
