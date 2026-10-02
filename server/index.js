@@ -47,22 +47,40 @@ const clientOrigins = [
   'http://localhost:5176',
 ].map((s) => s.trim()).filter(Boolean);
 
+// Static uploads served BEFORE credentials-based CORS to keep public media headers clean
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  // Avoid duplicate wildcard header when reverse proxy (e.g. Nginx on VPS) already adds Access-Control-Allow-Origin
+  const isProxied = Boolean(req.headers['x-forwarded-for'] || req.headers['x-forwarded-proto']);
+  if (!isProxied) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  next();
+}, express.static(path.join(__dirname, 'uploads'), {
+  maxAge: '7d',
+}));
+
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  if (clientOrigins.includes(origin)) return true;
+  try {
+    const url = new URL(origin);
+    if (url.hostname.endsWith('vastoratech.com') || url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return true;
+    }
+  } catch {}
+  return false;
+};
+
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || clientOrigins.includes(origin)) return cb(null, true);
+    if (isAllowedOrigin(origin)) return cb(null, true);
     return cb(null, false);
   },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
-  maxAge: '7d',
-  setHeaders: (res) => {
-    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  },
-}));
 app.get('/api/public-config', (_req, res) => {
   const base = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
   res.json({ success: true, publicBaseUrl: base });

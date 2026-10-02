@@ -16,14 +16,98 @@ export const sizeTo8k = (nw, nh) => {
   return { W: Math.round(w * scale), H: Math.round(h * scale), scale };
 };
 
-export const loadPosterImage = (src) =>
-  new Promise((resolve, reject) => {
-    const im = new Image();
-    im.crossOrigin = 'anonymous';
-    im.onload = () => resolve(im);
-    im.onerror = () => reject(new Error('Could not read the picture'));
-    im.src = src;
-  });
+export const loadPosterImage = async (src) => {
+  if (!src) throw new Error('Could not read the picture');
+
+  const tryDirectImg = (imgSrc, crossOrigin = false) =>
+    new Promise((resolve, reject) => {
+      const im = new Image();
+      if (crossOrigin) im.crossOrigin = 'anonymous';
+      im.onload = () => resolve(im);
+      im.onerror = (e) => reject(e);
+      im.src = imgSrc;
+    });
+
+  // 1. If it's already a blob: or data: URL, load directly
+  if (typeof src === 'string' && (src.startsWith('blob:') || src.startsWith('data:'))) {
+    try {
+      return await tryDirectImg(src, false);
+    } catch {
+      throw new Error('Could not read the picture');
+    }
+  }
+
+  // 2. Detect same-origin
+  const isSameOrigin =
+    typeof window !== 'undefined' &&
+    (src.startsWith('/') ||
+      src.startsWith('./') ||
+      src.startsWith(window.location.origin) ||
+      (!src.startsWith('http://') && !src.startsWith('https://')));
+
+  // 3. For same-origin images, fetch as Blob -> createObjectURL.
+  // This completely bypasses CORS restrictions and cannot taint the canvas.
+  if (isSameOrigin) {
+    try {
+      const res = await fetch(src, { cache: 'no-cache' });
+      if (res.ok) {
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        return await tryDirectImg(blobUrl, false);
+      }
+    } catch {
+      // Fall through if fetch fails
+    }
+
+    try {
+      // Direct load without crossOrigin for same-origin (does not taint canvas)
+      return await tryDirectImg(src, false);
+    } catch {
+      // Fall through
+    }
+  }
+
+  // 4. For external/cross-origin URLs, try fetch with CORS
+  try {
+    const res = await fetch(src, { mode: 'cors' });
+    if (res.ok) {
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      return await tryDirectImg(blobUrl, false);
+    }
+  } catch {
+    // Fall through
+  }
+
+  // 5. Try direct Image with crossOrigin
+  try {
+    return await tryDirectImg(src, true);
+  } catch {
+    // Fall through
+  }
+
+  // 6. Try backend proxy for external images
+  if (typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://'))) {
+    try {
+      const proxyUrl = `/api/posters/proxy-image?url=${encodeURIComponent(src)}`;
+      const res = await fetch(proxyUrl);
+      if (res.ok) {
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        return await tryDirectImg(blobUrl, false);
+      }
+    } catch {
+      // Fall through
+    }
+  }
+
+  // 7. Last resort: direct load without crossOrigin
+  try {
+    return await tryDirectImg(src, false);
+  } catch {
+    throw new Error('Could not read the picture');
+  }
+};
 
 const wrapLines = (ctx, text, maxWidth) => {
   const words = String(text).split(/\s+/).filter(Boolean);

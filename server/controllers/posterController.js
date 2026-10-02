@@ -273,3 +273,22 @@ export const deleteSheet = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Sheet and associated posters deleted successfully' });
 });
 
+export const proxyImage = asyncHandler(async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl || (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://'))) {
+    return res.status(400).json({ success: false, message: 'Invalid URL' });
+  }
+  const response = await fetch(targetUrl);
+  if (!response.ok) {
+    return res.status(response.status).json({ success: false, message: 'Failed to fetch image' });
+  }
+  const contentType = response.headers.get('content-type') || 'image/jpeg';
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  const buffer = await response.arrayBuffer();
+  res.send(Buffer.from(buffer));
+});
+
+

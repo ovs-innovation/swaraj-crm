@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import { protect, authorize } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
-import { submitSheet, getSheets, getSheet, updateSheet, deleteSheet, savePosters, sendToAreaManager, getPosters, reviewPoster, updatePoster, bulkDeletePosters, deletePoster } from '../controllers/posterController.js';
+import { submitSheet, getSheets, getSheet, updateSheet, deleteSheet, savePosters, sendToAreaManager, getPosters, reviewPoster, updatePoster, bulkDeletePosters, deletePoster, proxyImage } from '../controllers/posterController.js';
 
 const router = Router();
+router.get('/proxy-image', proxyImage);
 router.use(protect);
 
 router.post('/sheets', authorize('area_manager'), upload.single('file'), submitSheet);
