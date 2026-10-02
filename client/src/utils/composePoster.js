@@ -331,7 +331,7 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   }
 
   // 2. Swaraj Official Dealership Footer Strip
-  const stripH = Math.round(H * 0.076);
+  const stripH = Math.round(H * 0.098); // 9.8% of poster height for high visibility
   const stripY = H - stripH;
   const footerBg = options.footerBg || letterhead?.footerBg || '#BA0C2F'; // Official Swaraj Crimson Red
   const dealerColor = options.dealerColor || '#00843D';
@@ -341,11 +341,11 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   ctx.fillRect(0, stripY, W, stripH);
 
   // Subtle top accent line
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-  ctx.fillRect(0, stripY, W, Math.max(1, Math.round(H * 0.0012)));
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.fillRect(0, stripY, W, Math.max(2, Math.round(H * 0.0016)));
 
-  const padX = Math.round(W * 0.018);
-  const innerH = Math.round(stripH * 0.76);
+  const padX = Math.round(W * 0.015);
+  const innerH = Math.round(stripH * 0.86);
   const innerY = Math.round(stripY + (stripH - innerH) / 2);
 
   const dealerName = String(values?.headerText || '').trim() || 'मॉडल एजन्सीज';
@@ -356,12 +356,12 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   // 3. Left Section: Crisp Card with Dealer Name
   const badgeW = Math.round(W * 0.30);
   const badgeX = padX;
-  const badgeRadius = Math.round(innerH * 0.14);
+  const badgeRadius = Math.round(innerH * 0.15);
   drawRoundedRect(ctx, badgeX, innerY, badgeW, innerH, badgeRadius, dealerBg, null, 0);
 
   const maxBadgeTextW = badgeW - Math.round(badgeW * 0.08);
-  let dealerFontSize = Math.round(innerH * 0.42);
-  ctx.font = `bold ${dealerFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+  let dealerFontSize = Math.round(innerH * 0.46);
+  ctx.font = `900 ${dealerFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
   ctx.fillStyle = dealerColor;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
@@ -369,7 +369,7 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   // Dynamically reduce font size if needed
   while (ctx.measureText(dealerName).width > maxBadgeTextW && dealerFontSize > Math.round(innerH * 0.28)) {
     dealerFontSize -= 1;
-    ctx.font = `bold ${dealerFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.font = `900 ${dealerFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
   }
 
   if (ctx.measureText(dealerName).width <= maxBadgeTextW) {
@@ -380,11 +380,11 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
     const mid = Math.ceil(words.length / 2);
     const l1 = words.slice(0, mid).join(' ');
     const l2 = words.slice(mid).join(' ');
-    let lineFontSize = Math.round(innerH * 0.28);
-    ctx.font = `bold ${lineFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    while ((ctx.measureText(l1).width > maxBadgeTextW || ctx.measureText(l2).width > maxBadgeTextW) && lineFontSize > Math.round(innerH * 0.18)) {
+    let lineFontSize = Math.round(innerH * 0.34);
+    ctx.font = `900 ${lineFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    while ((ctx.measureText(l1).width > maxBadgeTextW || ctx.measureText(l2).width > maxBadgeTextW) && lineFontSize > Math.round(innerH * 0.20)) {
       lineFontSize -= 1;
-      ctx.font = `bold ${lineFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+      ctx.font = `900 ${lineFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     }
     ctx.fillText(fitText(ctx, l1, maxBadgeTextW), badgeX + badgeW / 2, innerY + innerH * 0.32);
     ctx.fillText(fitText(ctx, l2, maxBadgeTextW), badgeX + badgeW / 2, innerY + innerH * 0.68);
@@ -392,15 +392,15 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
 
   // 4. Middle Section: Location Icon + 2-Line Address
   const centerStartX = badgeX + badgeW + Math.round(W * 0.012);
-  const divX = W - Math.round(W * 0.28);
-  const iconR = Math.round(innerH * 0.22);
+  const divX = W - Math.round(W * 0.30);
+  const iconR = Math.round(innerH * 0.30);
   const iconCY = stripY + stripH / 2;
   const pinCX = centerStartX + iconR;
   drawIconCircle(ctx, pinCX, iconCY, iconR, 'pin');
 
-  const addrStartX = pinCX + iconR + Math.round(W * 0.008);
-  const addrMaxW = divX - addrStartX - Math.round(W * 0.01);
-  let addrFontSize = Math.round(innerH * 0.22);
+  const addrStartX = pinCX + iconR + Math.round(W * 0.009);
+  const addrMaxW = divX - addrStartX - Math.round(W * 0.012);
+  let addrFontSize = Math.round(innerH * 0.35);
 
   const { line1, line2 } = splitAddress(addressText);
 
@@ -409,53 +409,53 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   ctx.textBaseline = 'middle';
   if (line2) {
     let afs = addrFontSize;
-    ctx.font = `bold ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    while ((ctx.measureText(line1).width > addrMaxW || ctx.measureText(line2).width > addrMaxW) && afs > Math.round(innerH * 0.14)) {
+    ctx.font = `900 ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    while ((ctx.measureText(line1).width > addrMaxW || ctx.measureText(line2).width > addrMaxW) && afs > Math.round(innerH * 0.20)) {
       afs -= 1;
-      ctx.font = `bold ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
+      ctx.font = `900 ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
     }
-    ctx.fillText(fitText(ctx, line1, addrMaxW), addrStartX, iconCY - afs * 0.68);
-    ctx.font = `500 ${Math.round(afs * 0.92)}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    ctx.fillText(fitText(ctx, line2, addrMaxW), addrStartX, iconCY + afs * 0.68);
+    ctx.fillText(fitText(ctx, line1, addrMaxW), addrStartX, iconCY - afs * 0.58);
+    ctx.font = `800 ${Math.round(afs * 0.94)}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.fillText(fitText(ctx, line2, addrMaxW), addrStartX, iconCY + afs * 0.58);
   } else {
     let afs = addrFontSize;
-    ctx.font = `600 ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    while (ctx.measureText(line1).width > addrMaxW && afs > Math.round(innerH * 0.15)) {
+    ctx.font = `900 ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    while (ctx.measureText(line1).width > addrMaxW && afs > Math.round(innerH * 0.20)) {
       afs -= 1;
-      ctx.font = `600 ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
+      ctx.font = `900 ${afs}px "Noto Sans Devanagari", "Inter", sans-serif`;
     }
     ctx.fillText(fitText(ctx, line1, addrMaxW), addrStartX, iconCY);
   }
 
   // 5. Vertical Divider
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-  ctx.lineWidth = Math.max(1.5, Math.round(W * 0.0012));
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+  ctx.lineWidth = Math.max(2, Math.round(W * 0.0014));
   ctx.beginPath();
-  ctx.moveTo(divX, innerY + innerH * 0.12);
-  ctx.lineTo(divX, innerY + innerH * 0.88);
+  ctx.moveTo(divX, innerY + innerH * 0.08);
+  ctx.lineTo(divX, innerY + innerH * 0.92);
   ctx.stroke();
 
   // 6. Right Section: Phone Icon + 2-Line Contact Numbers / Website
-  const rightStartX = divX + Math.round(W * 0.008);
+  const rightStartX = divX + Math.round(W * 0.010);
   const phoneCX = rightStartX + iconR;
   drawIconCircle(ctx, phoneCX, iconCY, iconR, 'phone');
 
-  const phoneStartX = phoneCX + iconR + Math.round(W * 0.006);
+  const phoneStartX = phoneCX + iconR + Math.round(W * 0.008);
   const phoneMaxW = (W - padX) - phoneStartX;
   const cleanExtra = String(extraText || '').replace(/^https?:\/\//i, '');
 
-  let phoneFontSize = Math.round(innerH * 0.22);
-  ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-  while (ctx.measureText(phoneText).width > phoneMaxW && phoneFontSize > Math.round(innerH * 0.13)) {
+  let phoneFontSize = Math.round(innerH * 0.35);
+  ctx.font = `900 ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+  while (ctx.measureText(phoneText).width > phoneMaxW && phoneFontSize > Math.round(innerH * 0.18)) {
     phoneFontSize -= 1;
-    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.font = `900 ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
   }
 
-  let extraFontSize = Math.round(innerH * 0.19);
-  ctx.font = `600 ${extraFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-  while (ctx.measureText(cleanExtra).width > phoneMaxW && extraFontSize > Math.round(innerH * 0.10)) {
+  let extraFontSize = Math.round(innerH * 0.29);
+  ctx.font = `800 ${extraFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+  while (ctx.measureText(cleanExtra).width > phoneMaxW && extraFontSize > Math.round(innerH * 0.15)) {
     extraFontSize -= 1;
-    ctx.font = `600 ${extraFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.font = `800 ${extraFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
   }
 
   ctx.fillStyle = '#ffffff';
@@ -463,12 +463,12 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   ctx.textBaseline = 'middle';
 
   if (cleanExtra) {
-    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY - phoneFontSize * 0.62);
-    ctx.font = `600 ${extraFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
-    ctx.fillText(fitText(ctx, cleanExtra, phoneMaxW), phoneStartX, iconCY + extraFontSize * 0.62);
+    ctx.font = `900 ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY - phoneFontSize * 0.58);
+    ctx.font = `800 ${extraFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.fillText(fitText(ctx, cleanExtra, phoneMaxW), phoneStartX, iconCY + extraFontSize * 0.58);
   } else {
-    ctx.font = `bold ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
+    ctx.font = `900 ${phoneFontSize}px "Noto Sans Devanagari", "Inter", sans-serif`;
     ctx.fillText(fitText(ctx, phoneText, phoneMaxW), phoneStartX, iconCY);
   }
 
