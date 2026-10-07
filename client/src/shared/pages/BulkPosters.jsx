@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import { Trash2 } from 'lucide-react';
 import { postersAPI, settingsAPI } from '../../services/api';
 import { useLang } from '../context/LanguageContext';
-import { composePosterBlob, loadPosterImage, cellFromRow, guessPosterMapping, splitAddress, splitAddressLines, splitDealerName, formatContactNumbers } from '../../utils/composePoster';
+import { composePosterBlob, loadPosterImage, cellFromRow, guessPosterMapping, splitAddress, splitAddressLines, splitDealerName, formatContactNumbers, formatCombinedContacts } from '../../utils/composePoster';
 import { mediaUrl } from '../../utils/mediaUrl';
 import PosterLightbox from '../components/PosterLightbox';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -36,19 +36,18 @@ const BulkPosters = () => {
   const [design, setDesign] = useState(false);
   const [aspectRatio, setAspectRatio] = useState('4:5');
   const [showBrandBadges, setShowBrandBadges] = useState(true);
-  const [topLeftLogo, setTopLeftLogo] = useState('/swaraj-gold-seal.svg');
-  const [topRightLogo, setTopRightLogo] = useState('/swaraj-josh-badge.svg');
-  const [footerBg, setFooterBg] = useState('#BA0C2F');
-  const [dealerColor, setDealerColor] = useState('#00843D');
-  const [dealerBg, setDealerBg] = useState('#ffffff');
+  const [topLeftLogo, setTopLeftLogo] = useState(null);
+  const [topRightLogo, setTopRightLogo] = useState('/swaraj-logo.png');
+  const [footerBg, setFooterBg] = useState('#ECEEF1');
+  const [dealerColor, setDealerColor] = useState('#D32F2F');
   const [activeTab, setActiveTab] = useState('details');
   const [showEditor, setShowEditor] = useState(true);
   const [selectedRowIdx, setSelectedRowIdx] = useState(0);
   const [customDefaults, setCustomDefaults] = useState({
-    headerText: 'Shree Motors',
-    headerSub: 'MI Road, Jaipur\nRajasthan - 302001',
-    footerLeft: '+91 91161 23451',
-    footerRight: 'www.swarajtractors.com',
+    headerText: 'साईनाथ ट्रॅक्टर्स',
+    headerSub: 'जिनींग प्रेससमोर, नेवासा रोड, ता. शेवगाव, जि. अहिल्यानगर',
+    footerLeft: '+91 9423467974',
+    footerRight: '+91 8805982101',
   });
   const leftLogoInputRef = useRef(null);
   const rightLogoInputRef = useRef(null);
@@ -163,7 +162,6 @@ const BulkPosters = () => {
           topRightLogoSrc: topRightLogo,
           footerBg,
           dealerColor,
-          dealerBg,
         });
         currentFd.append('files', blob, `dealer-${i + 1}-8k.jpg`);
         currentFd.append('dealerName', values.headerText || `Dealer ${i + 1}`);
@@ -537,7 +535,7 @@ const BulkPosters = () => {
                           className="poster-edit-input"
                           value={sampleVals.headerText}
                           onChange={(e) => updateCurrentVal('headerText', e.target.value)}
-                          placeholder="e.g. Shree Motors / मॉडल एजन्सीज"
+                          placeholder="e.g. साईनाथ ट्रॅक्टर्स / Shree Motors"
                         />
                       </div>
 
@@ -550,7 +548,7 @@ const BulkPosters = () => {
                           className="poster-edit-input"
                           value={sampleVals.headerSub}
                           onChange={(e) => updateCurrentVal('headerSub', e.target.value)}
-                          placeholder="e.g. MI Road, Jaipur, Rajasthan - 302001"
+                          placeholder="e.g. जिनींग प्रेससमोर, नेवासा रोड, ता. शेवगाव, जि. अहिल्यानगर"
                         />
                       </div>
 
@@ -563,7 +561,7 @@ const BulkPosters = () => {
                           className="poster-edit-input"
                           value={sampleVals.footerLeft}
                           onChange={(e) => updateCurrentVal('footerLeft', e.target.value)}
-                          placeholder="e.g. +91 91161 23451"
+                          placeholder="e.g. +91 9423467974"
                         />
                       </div>
 
@@ -576,7 +574,7 @@ const BulkPosters = () => {
                           className="poster-edit-input"
                           value={sampleVals.footerRight}
                           onChange={(e) => updateCurrentVal('footerRight', e.target.value)}
-                          placeholder="e.g. +91 77750 00051 or www.swarajtractors.com"
+                          placeholder="e.g. +91 8805982101 or www.swarajtractors.com"
                         />
                       </div>
                     </div>
@@ -589,6 +587,13 @@ const BulkPosters = () => {
                           Top-Left Logo:
                         </label>
                         <div className="poster-logo-picker-row">
+                          <button
+                            type="button"
+                            className={`poster-pill-btn ${!topLeftLogo ? 'active' : ''}`}
+                            onClick={() => setTopLeftLogo(null)}
+                          >
+                            ❌ None
+                          </button>
                           <button
                             type="button"
                             className={`poster-pill-btn ${topLeftLogo === '/swaraj-gold-seal.svg' ? 'active' : ''}`}
@@ -610,13 +615,6 @@ const BulkPosters = () => {
                           >
                             📁 Upload Logo...
                           </button>
-                          <button
-                            type="button"
-                            className={`poster-pill-btn ${!topLeftLogo ? 'active' : ''}`}
-                            onClick={() => setTopLeftLogo(null)}
-                          >
-                            ❌ None
-                          </button>
                         </div>
                       </div>
 
@@ -627,17 +625,17 @@ const BulkPosters = () => {
                         <div className="poster-logo-picker-row">
                           <button
                             type="button"
+                            className={`poster-pill-btn ${topRightLogo === '/swaraj-logo.png' ? 'active' : ''}`}
+                            onClick={() => setTopRightLogo('/swaraj-logo.png')}
+                          >
+                            🏷️ Swaraj Logo
+                          </button>
+                          <button
+                            type="button"
                             className={`poster-pill-btn ${topRightLogo === '/swaraj-josh-badge.svg' ? 'active' : ''}`}
                             onClick={() => setTopRightLogo('/swaraj-josh-badge.svg')}
                           >
                             ⚡ Josh Ka Raaz
-                          </button>
-                          <button
-                            type="button"
-                            className={`poster-pill-btn ${topRightLogo === '/swaraj-logo.png' ? 'active' : ''}`}
-                            onClick={() => setTopRightLogo('/swaraj-logo.png')}
-                          >
-                            🏷️ Swaraj
                           </button>
                           <button
                             type="button"
@@ -658,10 +656,10 @@ const BulkPosters = () => {
 
                       <div className="form-group">
                         <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                          Footer Bar Color:
+                          Footer Bar Background:
                         </label>
                         <div className="poster-color-swatches">
-                          {['#BA0C2F', '#800020', '#003A70', '#18181B'].map((c) => (
+                          {['#ECEEF1', '#FFFFFF', '#F8FAFC', '#BA0C2F', '#004728', '#18181B'].map((c) => (
                             <button
                               key={c}
                               type="button"
@@ -682,10 +680,10 @@ const BulkPosters = () => {
 
                       <div className="form-group">
                         <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: 4 }}>
-                          Dealer Name Text Color:
+                          Dealer Name Color:
                         </label>
                         <div className="poster-color-swatches">
-                          {['#00843D', '#BA0C2F', '#C8963E', '#0F172A'].map((c) => (
+                          {['#D32F2F', '#BA0C2F', '#00843D', '#C8963E', '#0F172A'].map((c) => (
                             <button
                               key={c}
                               type="button"
@@ -744,94 +742,71 @@ const BulkPosters = () => {
                   </div>
 
                   {templateSrc && (
-                    <div className="poster-promo-footer">
-                      <div
-                        className="poster-promo-red-wrap"
-                        style={{
-                          background: footerBg === '#BA0C2F'
-                            ? 'linear-gradient(to bottom, #860017, #52000A)'
-                            : footerBg,
-                        }}
-                      >
-                          <div
-                            className="poster-promo-header"
-                            title="Click to edit dealer name"
-                            onClick={() => { setShowEditor(true); setActiveTab('details'); }}
-                          >
-                            <h2 className="poster-promo-dealer">
-                              {samplePrefix && <span className="dealer-prefix">{samplePrefix}</span>}
-                              <span className="dealer-brand">{sampleCompany}</span>
-                            </h2>
-                            <div className="poster-promo-dash">
-                              <span className="dash-bar" />
-                              <span className="dash-bar" />
-                            </div>
-                          </div>
-
-                          <div className="poster-promo-pill">
-                            <div
-                              className="poster-promo-pill-left"
-                              title="Click to edit address"
-                              onClick={() => { setShowEditor(true); setActiveTab('details'); }}
-                            >
-                              <span className="poster-promo-icon pin-icon">
-                                <svg viewBox="0 0 24 24">
-                                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z" />
-                                </svg>
-                              </span>
-                              <div className="poster-promo-addr">
-                                {sampleAddrLines.map((line, idx) => (
-                                  <span key={idx} className="promo-addr-line">{line}</span>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="poster-promo-pill-div" />
-
-                            <div
-                              className="poster-promo-pill-right"
-                              title="Click to edit phone number"
-                              onClick={() => { setShowEditor(true); setActiveTab('details'); }}
-                            >
-                              <span className="poster-promo-icon phone-icon">
-                                <svg viewBox="0 0 24 24">
-                                  <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2z" />
-                                </svg>
-                              </span>
-                              <strong className="poster-promo-phone">
-                                {formatContactNumbers(sampleVals.footerLeft)}
-                              </strong>
-                            </div>
-                          </div>
-                        </div>
-
+                    <div
+                      className="poster-promo-footer"
+                      style={{
+                        background: footerBg && footerBg !== '#BA0C2F' ? footerBg : '#ECEEF1',
+                      }}
+                    >
+                      <div className="poster-footer-inner">
+                        {/* LEFT: Tagline + Large Bold Red Dealer Name */}
                         <div
-                          className="poster-promo-web-bar"
-                          title="Click to edit website"
+                          className="poster-footer-left"
+                          title="Click to edit dealer details"
                           onClick={() => { setShowEditor(true); setActiveTab('details'); }}
                         >
-                          <div className="promo-web-flank">
-                            <span className="flank-line" />
-                            <span className="flank-line" />
-                          </div>
-                          <div className="promo-web-center">
-                            <span className="promo-web-badge">
+                          {sampleDealer2 ? (
+                            <div className="poster-dealer-name-2line" style={{ color: dealerColor || '#D32F2F' }}>
+                              <span className="poster-dealer-name-line">{sampleDealer1}</span>
+                              <span className="poster-dealer-name-line">{sampleDealer2}</span>
+                            </div>
+                          ) : (
+                            <h2
+                              className="poster-dealer-name"
+                              style={{ color: dealerColor || '#D32F2F' }}
+                            >
+                              {sampleDealer1 || sampleVals.headerText}
+                            </h2>
+                          )}
+                        </div>
+
+                        {/* CENTER: Divider */}
+                        <div className="poster-footer-divider" />
+
+                        {/* RIGHT: Address with green pin + Green phone pill */}
+                        <div
+                          className="poster-footer-right"
+                          title="Click to edit contact details"
+                          onClick={() => { setShowEditor(true); setActiveTab('details'); }}
+                        >
+                          <div className="poster-addr-row">
+                            <span className="poster-pin-icon-wrap">
                               <svg viewBox="0 0 24 24">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 0 1 0-5 2.5 2.5 0 0 1 0 5z" />
                               </svg>
                             </span>
-                            <span className="promo-web-url">
-                              {String(sampleVals.footerRight || 'www.swarajtractors.com').replace(/^https?:\/\//i, '')}
-                            </span>
+                            <div className="poster-addr-text">
+                              {sampleAddrLines.map((line, idx) => (
+                                <span key={idx} className="poster-addr-line">{line}</span>
+                              ))}
+                            </div>
                           </div>
-                          <div className="promo-web-flank">
-                            <span className="flank-line" />
-                            <span className="flank-line" />
+
+                          <div className="poster-phone-pill">
+                            <span className="poster-phone-icon-wrap">
+                              <svg viewBox="0 0 24 24">
+                                <path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2z" />
+                              </svg>
+                            </span>
+                            <strong className="poster-phone-text">
+                              {formatCombinedContacts(sampleVals.footerLeft, sampleVals.footerRight)}
+                            </strong>
                           </div>
                         </div>
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
