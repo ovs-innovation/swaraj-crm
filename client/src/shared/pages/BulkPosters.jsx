@@ -44,10 +44,10 @@ const BulkPosters = () => {
   const [showEditor, setShowEditor] = useState(true);
   const [selectedRowIdx, setSelectedRowIdx] = useState(0);
   const [customDefaults, setCustomDefaults] = useState({
-    headerText: 'साईनाथ ट्रॅक्टर्स',
-    headerSub: 'जिनींग प्रेससमोर, नेवासा रोड, ता. शेवगाव, जि. अहिल्यानगर',
-    footerLeft: '+91 9423467974',
-    footerRight: '+91 8805982101',
+    headerText: '',
+    headerSub: '',
+    footerLeft: '',
+    footerRight: 'www.swarajtractors.com',
   });
   const leftLogoInputRef = useRef(null);
   const rightLogoInputRef = useRef(null);
@@ -101,7 +101,14 @@ const BulkPosters = () => {
       const res = await postersAPI.sheet(s._id);
       const full = res.data.data || s;
       setJob(full);
-      setMapping(full.mapping && full.mapping.headerText ? full.mapping : guessPosterMapping(full.headers || []));
+      const guessed = guessPosterMapping(full.headers || []);
+      const mergedMapping = {
+        headerText: (full.mapping?.headerText && full.headers?.includes(full.mapping.headerText)) ? full.mapping.headerText : guessed.headerText,
+        headerSub: (full.mapping?.headerSub && full.headers?.includes(full.mapping.headerSub)) ? full.mapping.headerSub : guessed.headerSub,
+        footerLeft: (full.mapping?.footerLeft && full.headers?.includes(full.mapping.footerLeft)) ? full.mapping.footerLeft : guessed.footerLeft,
+        footerRight: (full.mapping?.footerRight && full.headers?.includes(full.mapping.footerRight)) ? full.mapping.footerRight : guessed.footerRight,
+      };
+      setMapping(mergedMapping);
       loadPosters(full._id);
     } catch (err) {
       setError(err.response?.data?.message || t('posters.parseFail'));

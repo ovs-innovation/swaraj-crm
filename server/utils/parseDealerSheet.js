@@ -30,8 +30,8 @@ const guessField = (header) => {
   if (!h) return null;
   if (/website|weburl|www|url|site/.test(h)) return 'footerRight';
   if (/mobile|phonenumber|phone|whatsapp|contactno|contact|mob|tel/.test(h)) return 'footerLeft';
-  if (/address|city|district|state|jagah|sthan|location|area/.test(h) && !/email/.test(h)) return 'headerSub';
-  if ((/dealername|firm|shop|outlet/.test(h) || (h === 'name' || h === 'naam' || h.endsWith('name'))) && !/code|file/.test(h)) {
+  if ((/addres|address|addr|city|district|state|jagah|sthan|location|area|pata/.test(h) || h.includes('addr')) && !/email/.test(h)) return 'headerSub';
+  if ((/dealername|dealership|firm|shop|outlet/.test(h) || (h === 'name' || h === 'naam' || h.endsWith('name'))) && !/code|file/.test(h)) {
     return 'headerText';
   }
   if (/dealercode|code|gst|email/.test(h)) return 'footerRight';

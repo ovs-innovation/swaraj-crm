@@ -514,8 +514,8 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   ctx.fillRect(0, stripY, W, topLineWidth);
 
   const dealerTagline = String(options.dealerTagline !== undefined ? options.dealerTagline : (values?.dealerTagline || '')).trim();
-  const dealerName = String(values?.headerText || '').trim() || 'साईनाथ ट्रॅक्टर्स';
-  const addressText = String(values?.headerSub || '').trim() || 'जिनींग प्रेससमोर, नेवासा रोड, ता. शेवगाव, जि. अहिल्यानगर';
+  const dealerName = String(values?.headerText || '').trim();
+  const addressText = String(values?.headerSub || '').trim();
   const phone1 = String(values?.footerLeft || '').trim();
   const phone2 = String(values?.footerRight || '').trim();
   const combinedPhones = formatCombinedContacts(phone1, phone2);
@@ -687,8 +687,8 @@ const nkey = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 export const guessPosterMapping = (headers = []) => {
   const mapping = { headerText: '', headerSub: '', footerLeft: '', footerRight: '' };
   const pick = (test) => headers.find((h) => test(nkey(h))) || '';
-  mapping.headerText = pick((h) => (/dealername|firm|shop|outlet/.test(h) || h === 'name' || h === 'naam' || h.endsWith('name')) && !/code|file/.test(h));
-  mapping.headerSub = pick((h) => /address|city|district|state|location|area/.test(h) && !/email/.test(h));
+  mapping.headerText = pick((h) => (/dealername|dealership|firm|shop|outlet/.test(h) || h === 'name' || h === 'naam' || h.endsWith('name')) && !/code|file/.test(h));
+  mapping.headerSub = pick((h) => (/addres|address|addr|city|district|state|location|area|pata/.test(h) || nkey(h).includes('addr')) && !/email/.test(h));
   mapping.footerLeft = pick((h) => /mobile|phonenumber|phone|whatsapp|contact|mob|tel/.test(h));
   mapping.footerRight = pick((h) => /website|weburl|www|url|site/.test(h)) || pick((h) => /dealercode|code|gst|email/.test(h));
   if (!mapping.headerText) mapping.headerText = headers[0] || '';
