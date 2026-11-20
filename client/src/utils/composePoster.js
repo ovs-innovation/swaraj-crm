@@ -420,18 +420,18 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
 
   let W, H, stripH, imgH;
   if (aspectMode === '4:5') {
-    W = 2160;
-    H = 2700;
+    W = 1280;
+    H = 1600;
     stripH = Math.round(H * 0.142);
     imgH = H - stripH;
   } else if (aspectMode === '1:1') {
-    W = 2160;
-    H = 2160;
+    W = 1600;
+    H = 1600;
     stripH = Math.round(H * 0.155);
     imgH = H - stripH;
   } else {
     // Preserve 100% of original image dimensions and attach footer cleanly below
-    W = 2160;
+    W = 1280;
     stripH = Math.round(W * 0.15);
     const scale = W / (img.naturalWidth || W);
     imgH = Math.round((img.naturalHeight || W) * scale);
@@ -562,7 +562,7 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
     // 2-line bold layout
     let dFontSize = Math.round(stripH * (dealerTagline ? 0.28 : 0.34));
     ctx.font = dealerFont(dFontSize);
-    while ((ctx.measureText(dLine1).width > leftMaxW || ctx.measureText(dLine2).width > leftMaxW) && dFontSize > 22) {
+    while ((ctx.measureText(dLine1).width > leftMaxW || ctx.measureText(dLine2).width > leftMaxW) && dFontSize > 14) {
       dFontSize -= 0.5;
       ctx.font = dealerFont(dFontSize);
     }
@@ -574,7 +574,7 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
     // Single punchy massive line centered vertically
     let dFontSize = Math.round(stripH * (dealerTagline ? 0.44 : 0.52));
     ctx.font = dealerFont(dFontSize);
-    while (ctx.measureText(dealerName).width > leftMaxW && dFontSize > 24) {
+    while (ctx.measureText(dealerName).width > leftMaxW && dFontSize > 16) {
       dFontSize -= 1;
       ctx.font = dealerFont(dFontSize);
     }
@@ -599,7 +599,7 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   let addrFontSize = addrLines.length > 1 ? Math.round(stripH * 0.14) : Math.round(stripH * 0.17);
   const addrFont = (s) => `800 ${s}px "Noto Sans Devanagari", "Montserrat", "Inter", sans-serif`;
   ctx.font = addrFont(addrFontSize);
-  while (addrLines.some((l) => ctx.measureText(l).width > addrMaxW) && addrFontSize > 16) {
+  while (addrLines.some((l) => ctx.measureText(l).width > addrMaxW) && addrFontSize > 11) {
     addrFontSize -= 0.5;
     ctx.font = addrFont(addrFontSize);
   }
@@ -630,7 +630,7 @@ export const composePosterBlob = async (imageSrc, letterhead, values, preloaded,
   let phoneFontSize = Math.round(pillH * 0.54);
   const phoneFont = (s) => `900 ${s}px "Montserrat", "Inter", sans-serif`;
   ctx.font = phoneFont(phoneFontSize);
-  while (ctx.measureText(combinedPhones).width > phoneMaxW && phoneFontSize > 18) {
+  while (ctx.measureText(combinedPhones).width > phoneMaxW && phoneFontSize > 13) {
     phoneFontSize -= 0.5;
     ctx.font = phoneFont(phoneFontSize);
   }

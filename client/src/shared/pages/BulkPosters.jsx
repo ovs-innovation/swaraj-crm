@@ -232,8 +232,8 @@ const BulkPosters = () => {
               try {
                 const img = await loadPosterImage(url);
                 const c = document.createElement('canvas');
-                c.width = img.naturalWidth || 1080;
-                c.height = img.naturalHeight || 1350;
+                c.width = img.naturalWidth || 1280;
+                c.height = img.naturalHeight || 1600;
                 const ctx = c.getContext('2d');
                 ctx.drawImage(img, 0, 0);
                 const b = await new Promise((resolve) => c.toBlob(resolve, 'image/png'));
@@ -445,9 +445,9 @@ const BulkPosters = () => {
                     type="button"
                     className={`poster-ratio-btn ${aspectRatio === '4:5' ? 'active' : ''}`}
                     onClick={() => setAspectRatio('4:5')}
-                    title="Official Swaraj Portrait Poster (1080x1350 / 4:5)"
+                    title="Official Swaraj Portrait Poster (1280x1600)"
                   >
-                    📱 4:5 Portrait
+                    📱 1280×1600
                   </button>
                   <button
                     type="button"
@@ -710,7 +710,16 @@ const BulkPosters = () => {
                 <div className={`poster-live aspect-${aspectRatio === '4:5' ? 'portrait' : aspectRatio === '1:1' ? 'square' : 'original'}`}>
                   <div className="poster-img-wrap">
                     {templateSrc ? (
-                      <img className="poster-bg-img" src={templateSrc} alt="Poster Template" />
+                      <img
+                        className="poster-bg-img"
+                        src={templateSrc}
+                        alt="Poster Template"
+                        onError={(e) => {
+                          if (!e.target.src.endsWith('/default-poster-template.jpg')) {
+                            e.target.src = '/default-poster-template.jpg';
+                          }
+                        }}
+                      />
                     ) : (
                       <div className="empty-state" style={{ minHeight: 220 }}>{t('posters.needTpl')}</div>
                     )}
